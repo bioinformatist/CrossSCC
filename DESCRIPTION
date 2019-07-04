@@ -7,6 +7,8 @@ Authors@R:
            role = c("aut", "cre"),
            email = "first.last@example.com")
 Description: What the package does (one paragraph).
-License: What license it uses
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
+URL: https://github.com/bioinformatist/GMMClassifier
+BugReports: https://github.com/bioinformatist/GMMClassifier/issues
