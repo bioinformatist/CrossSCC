@@ -3,45 +3,50 @@
 
 # GMMClassifier
 
-The goal of GMMClassifier is to …
+The goal of GMMClassifier is to classify single cells (as expression
+matrix of scRNA-seq data) into subtypes, and to find out the mapping
+relationship among subtypes across datasets (of different batch).
 
 ## Installation
 
-You can install the released version of GMMClassifier from
-[CRAN](https://CRAN.R-project.org) with:
+You can install the latest version of GMMClassifier with:
 
 ``` r
-install.packages("GMMClassifier")
+install.packages("devtools")
+devtools::install_github("GMMClassifier")
 ```
 
-## Example
+## About example data
 
-This is a basic example which shows you how to solve a common problem:
+The example data used in this project is part of
+[GSE81861](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE81861)
+of [this paper](https://www.nature.com/articles/ng.3818#accessions).
+First, the FPKM matrix file of all cells was
+downloaded:
+
+``` bash
+aria2c ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE81nnn/GSE81861/suppl/GSE81861_Cell_Line_FPKM.csv.gz
+pigz -d GSE81861_Cell_Line_FPKM.csv.gz
+```
+
+The matrix was read into R and the columns of two batch were selected as
+subsets according to [the results part of the
+paper](https://www.nature.com/articles/ng.3818#results) “To assess batch
+effects, we performed scRNA–seq in two batches for GM12878
+(lymphoblastoid) cells and also for H1 embryonic stem cells. Gene
+expression was quantified as fragments per kilobase per million reads
+(FPKM), and low-quality cells were discarded on the basis of multiple
+metrics”:
 
 ``` r
-## basic example code
+library(data.table)
+cl <- fread('GSE81861_Cell_Line_FPKM.csv')
+names(cl)[1] <- 'Gene'
+cl.b1 <- cbind(cl[, 1], cl[, .SD, .SDcols = names(cl) %like% "_B1_"])
+cl.b2 <- cbind(cl[, 1], cl[, .SD, .SDcols = names(cl) %like% "_B2_"])
 ```
 
-What is special about using `README.Rmd` instead of just `README.md`?
-You can include R chunks like so:
+Thus, the `data.table` object `cl.b1` contains *GM12878* and *H1* cell
+of batch one, and `cl.b2` contains those of batch two.
 
-``` r
-summary(cars)
-#>      speed           dist       
-#>  Min.   : 4.0   Min.   :  2.00  
-#>  1st Qu.:12.0   1st Qu.: 26.00  
-#>  Median :15.0   Median : 36.00  
-#>  Mean   :15.4   Mean   : 42.98  
-#>  3rd Qu.:19.0   3rd Qu.: 56.00  
-#>  Max.   :25.0   Max.   :120.00
-```
-
-You’ll still need to render `README.Rmd` regularly, to keep `README.md`
-up-to-date.
-
-You can also embed plots, for example:
-
-<img src="man/figures/README-pressure-1.png" width="100%" />
-
-In that case, don’t forget to commit and push the resulting figure
-files, so they display on GitHub\!
+## How to use?
