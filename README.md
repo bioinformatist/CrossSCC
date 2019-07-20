@@ -61,7 +61,7 @@ cl <- lapply(cl, function(x) x[, max.var := max(var), by = 'Entrez'][var != 0 & 
 cl <- lapply(cl, function(x) x[, grep("var", colnames(x)) := NULL])
 cl <- lapply(cl, function(x) as.data.frame(x) %>% remove_rownames %>% column_to_rownames(var="Entrez"))
 cl <- lapply(cl, function(x) new("ExpressionSet", exprs=as.matrix(x), annotation = 'org.Hs.eg.db'))
-cl <- lapply(cl, function(x) nsFilter(x, require.entrez = TRUE, require.GOBP = TRUE, require.GOCC = TRUE, require.GOMF = TRUE))
+cl <- lapply(cl, function(x) nsFilter(x, require.entrez = TRUE, require.GOBP = TRUE, require.GOCC = TRUE, require.GOMF = TRUE, var.cutoff = 0.999))
 cl.b1 <- exprs(cl[[1]][[1]])
 cl.b2 <- exprs(cl[[2]][[1]])
 use_data(cl.b1, compress = 'xz')
@@ -69,6 +69,6 @@ use_data(cl.b2, compress = 'xz')
 ```
 
 Thus, the `matrix` object `cl.b1` contains *GM12878* and *H1* cell of
-batch one, and `cl.b2` contains those of batch two.
+batch 1, and `cl.b2` contains those of batch 2.
 
 ## How to use?
