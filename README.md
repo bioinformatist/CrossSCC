@@ -94,8 +94,9 @@ models.
 
 ### How can I determine the best number of components when fitting model?
 
-Package mixtools provides a method using hypothesis testing to select
-number of components. For example:
+Package mixtools provides a method using [hypothesis
+testing](https://www.stat.cmu.edu/~cshalizi/402/lectures/20-mixture-examples/lecture-20.pdf)
+to select number of components. For example:
 
 ``` r
 library(mixtools)
@@ -104,34 +105,34 @@ library(mixtools)
 library(plotGMM)
 data(cl.b1)
 a.boot <- boot.comp(y = cl.b1[5, ], max.comp = 10, B = 1000, mix.type = "normalmix", epsilon = 1e-3)
-#> number of iterations= 33 
-#> number of iterations= 33 
-#> number of iterations= 25 
 #> number of iterations= 49 
-#> number of iterations= 36 
-#> number of iterations= 24 
-#> number of iterations= 21 
-#> number of iterations= 29 
-#> number of iterations= 34 
-#> number of iterations= 52 
-#> number of iterations= 23 
-#> number of iterations= 44 
-#> number of iterations= 40 
-#> One of the variances is going to zero;  trying new starting values.
-#> number of iterations= 25 
+#> number of iterations= 170 
+#> number of iterations= 53 
+#> number of iterations= 16 
+#> number of iterations= 12 
+#> number of iterations= 58 
+#> number of iterations= 133 
+#> number of iterations= 58 
+#> number of iterations= 20 
+#> number of iterations= 129 
+#> number of iterations= 101 
+#> number of iterations= 18 
+#> number of iterations= 5 
+#> number of iterations= 14 
+#> number of iterations= 49 
 ...
+#> Decision: Select 3 Component(s)
+str(a.boot)
+#> List of 3
+#>  $ p.values   : num [1:3] 0.049 0.041 0.342
+#>  $ log.lik    :List of 3
+#>   ..$ : num [1:1000] 3.8 2.57 10.75 4.09 5.47 ...
+#>   ..$ : num [1:1000] 3.19 2.9 9.73 5.85 3.31 ...
+#>   ..$ : num [1:1000] 5.409 4.489 0.605 7.155 8.564 ...
+#>  $ obs.log.lik: num [1:3] 13.43 13.66 6.96
 ```
 
 <img src="man/figures/README-select_component_num-1.png" width="100%" />
-
-    #> Decision: Select 2 Component(s)
-    str(a.boot)
-    #> List of 3
-    #>  $ p.values   : num [1:2] 0.034 0.05
-    #>  $ log.lik    :List of 2
-    #>   ..$ : num [1:1000] 9.52 7.12 2.28 3.45 1.58 ...
-    #>   ..$ : num [1:1000] 1.81 1.96 2.91 8.4 4.38 ...
-    #>  $ obs.log.lik: num [1:2] 13.4 13.7
 
   - `cl.b1[5, ]` means the 5th row for `data.frame` `cl.b1`.
   - It seems in rare cases the meaning components(`max.comp`) will
@@ -145,6 +146,9 @@ hypothesis of a (k+1)-component fit to various mixture models. A p-value
 is calculated for each test and once the p-value is above a specified
 significance level, the testing terminates.
 
+> The vertical red lines mark the observed difference in
+> log-likelihoods.
+
 The value of `length(a.boot$obs.log.lik)` was chosen as optimized number
 of
 components.
@@ -154,20 +158,21 @@ components.
 ``` r
 # Should not in fast mode: the component densities should be allowed to have different mus and sigmas
 a.optim <- normalmixEM(cl.b1[5, ], k = length(a.boot$obs.log.lik))
-#> number of iterations= 114
+#> One of the variances is going to zero;  trying new starting values.
+#> number of iterations= 117
 str(a.optim)
 #> List of 9
 #>  $ x         : num [1:101] 24.5 472.4 11519.7 17056.2 8822 ...
-#>  $ lambda    : num [1:2] 0.856 0.144
-#>  $ mu        : num [1:2] 9800 20005
-#>  $ sigma     : num [1:2] 5248 9417
-#>  $ loglik    : num -1031
-#>  $ posterior : num [1:101, 1:2] 0.947 0.95 0.938 0.812 0.955 ...
+#>  $ lambda    : num [1:3] 0.0675 0.7436 0.1889
+#>  $ mu        : num [1:3] 403 10162 19489
+#>  $ sigma     : num [1:3] 354 4305 8516
+#>  $ loglik    : num -1024
+#>  $ posterior : num [1:101, 1:3] 8.96e-01 9.23e-01 4.24e-215 0.00 1.18e-123 ...
 #>   ..- attr(*, "dimnames")=List of 2
 #>   .. ..$ : NULL
-#>   .. ..$ : chr [1:2] "comp.1" "comp.2"
-#>  $ all.loglik: num [1:115] -1196 -1038 -1037 -1035 -1033 ...
-#>  $ restarts  : num 0
+#>   .. ..$ : chr [1:3] "comp.1" "comp.2" "comp.3"
+#>  $ all.loglik: num [1:118] -1063 -1033 -1031 -1031 -1030 ...
+#>  $ restarts  : num 1
 #>  $ ft        : chr "normalmixEM"
 #>  - attr(*, "class")= chr "mixEM"
 plot_GMM(a.optim, k = length(a.boot$obs.log.lik))
@@ -188,8 +193,8 @@ To rate a feature, we first rated each component in a model:
 
 ``` r
 apply(a.optim$posterior, 2, mean) > 0.9
-#> comp.1 comp.2 
-#>  FALSE  FALSE
+#> comp.1 comp.2 comp.3 
+#>  FALSE  FALSE  FALSE
 ```
 
   - The [overlapping coefficient
@@ -219,16 +224,22 @@ get_ovl_iterly <- function(x) {
 
 (ovls <- get_ovl_iterly(a.optim))
 #> [[1]]
-#> [1] 0.4540239
+#> [1] 0.02312081 0.01819388
 #> 
 #> [[2]]
-#> [1] 0.4540239
+#> [1] 0.02312081 0.42728836
+#> 
+#> [[3]]
+#> [1] 0.01819388 0.42728836
 
 lapply(ovls, function(x) all(x < 0.05))
 #> [[1]]
-#> [1] FALSE
+#> [1] TRUE
 #> 
 #> [[2]]
+#> [1] FALSE
+#> 
+#> [[3]]
 #> [1] FALSE
 ```
 
@@ -253,8 +264,8 @@ tmp.size <- table(apply(a.optim$posterior, 1, function(x) colnames(a.optim$poste
 # Must use <<- here: both <- and assign() do NOT work due to scope
 invisible(lapply(names(tmp.size), function(x) ab.size[[x]] <<- tmp.size[x]))
 ab.size
-#> comp.1 comp.2 
-#>     92      9
+#> comp.1 comp.2 comp.3 
+#>      8     83     10
 ```
 
 ## Questions
@@ -268,7 +279,7 @@ ab.size
 # We have lambda as relative percentage of each components
 # But I don't know if the difference
 a.optim$lambda
-#> [1] 0.8564079 0.1435921
+#> [1] 0.06746598 0.74362853 0.18890549
 ```
 
 2.  Which method should be used to (or be implemented as **alternative

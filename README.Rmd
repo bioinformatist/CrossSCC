@@ -102,9 +102,9 @@ The [mixtools](https://cran.r-project.org/web/packages/mixtools/index.html) pack
 
 ### How can I determine the best number of components when fitting model?
 
-Package mixtools provides a method using hypothesis testing to select number of components. For example:
+Package mixtools provides a method using [hypothesis testing](https://www.stat.cmu.edu/~cshalizi/402/lectures/20-mixture-examples/lecture-20.pdf) to select number of components. For example:
 
-```{r select_component_num, output.lines = 15}
+```{r select_component_num, output.lines = 15, cache=FALSE}
 library(mixtools)
 library(plotGMM)
 data(cl.b1)
@@ -118,11 +118,13 @@ str(a.boot)
 
 The `boot.comp()` function performs the likelihood ratio statistic for testing the null hypothesis of a k-component fit versus the alternative hypothesis of a (k+1)-component fit to various mixture models. A p-value is calculated for each test and once the p-value is above a specified significance level, the testing terminates.
 
+> The vertical red lines mark the observed difference in log-likelihoods.
+
 The value of `length(a.boot$obs.log.lik)` was chosen as optimized number of components.
 
 ### How to fit a model?
 
-```{r fit_model}
+```{r fit_model, cache=FALSE}
 # Should not in fast mode: the component densities should be allowed to have different mus and sigmas
 a.optim <- normalmixEM(cl.b1[5, ], k = length(a.boot$obs.log.lik))
 str(a.optim)
