@@ -1,14 +1,27 @@
-Package: GMMClassifier
+Package: CrossSCC
 Title: What the Package Does (One Line, Title Case)
-Version: 0.0.0.9000
+Version: 0.99.0
 Authors@R: 
-    person(given = "First",
-           family = "Last",
+    person(given = "Yu",
+           family = "Sun",
            role = c("aut", "cre"),
-           email = "first.last@example.com")
-Description: What the package does (one paragraph).
+           email = "suny226@mail2.sysu.edu.cn",
+           comment = c(ORCID = '0000-0003-4269-7187'))
+Description: An Single-Cell Clustering framework for multiple batch data analysis.
 License: GPL-3
 Encoding: UTF-8
-LazyData: true
 URL: https://github.com/bioinformatist/GMMClassifier
 BugReports: https://github.com/bioinformatist/GMMClassifier/issues
+Imports: 
+    mixtools,
+    memoise,
+    snowfall,
+    pbapply,
+    emojifont,
+    data.tree,
+    crayon,
+    visNetwork,
+    R.utils
+Depends: 
+    snow
+RoxygenNote: 6.1.1
