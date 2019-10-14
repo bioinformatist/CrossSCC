@@ -4,9 +4,9 @@
 # CrossSCC
 
 The goal of CrossSCC is to classify **S**ingle-**C**ell data(as
-expression matrix of scRNA-seq data) **Cross**ing batch into **C**lusters
-using Gaussian Mixture Model, and to find out the mapping relationship
-in clusters.
+expression matrix of scRNA-seq data) **Cross**ing batch into
+**C**lusters using Gaussian Mixture Model, and to find out the mapping
+relationship in clusters.
 
 ![](man/figures/readme.gif)
 
@@ -128,8 +128,8 @@ library(data.tree)
 #> 
 #>     Aggregate
 handsome.zuo$Get('sampleNames', filterFun = isLeaf)
-#> $`GO:0006958`
-#> $`GO:0006958`[[1]]
+#> $`GO:0030449`
+#> $`GO:0030449`[[1]]
 #>  [1] "RHB1116__GM12878_B1__orange" "RHB1118__GM12878_B1__orange"
 #>  [3] "RHB1140__GM12878_B1__orange" "RHB1146__GM12878_B1__orange"
 #>  [5] "RHB1153__GM12878_B1__orange" "RHB1165__GM12878_B1__orange"
@@ -138,7 +138,7 @@ handsome.zuo$Get('sampleNames', filterFun = isLeaf)
 #> [11] "RHB1204__GM12878_B1__orange" "RHB1205__GM12878_B1__orange"
 #> [13] "RHB1207__GM12878_B1__orange"
 #> 
-#> $`GO:0006958`[[2]]
+#> $`GO:0030449`[[2]]
 #> [1] "RHB1129__GM12878_B1__orange" "RHB1141__GM12878_B1__orange"
 #> [3] "RHB1189__GM12878_B1__orange" "RHB1200__GM12878_B1__orange"
 #> [5] "RHB1201__GM12878_B1__orange" "RHB1206__GM12878_B1__orange"
@@ -158,7 +158,7 @@ handsome.zuo$Get('sampleNames', filterFun = isLeaf)
 #> [5] "RHC092__H1_B1__brown"       
 #> 
 #> 
-#> $`GO:0007338`
+#> $`GO:0034508`
 #>  [1] "RHC069__H1_B1__brown" "RHC070__H1_B1__brown" "RHC071__H1_B1__brown"
 #>  [4] "RHC072__H1_B1__brown" "RHC073__H1_B1__brown" "RHC074__H1_B1__brown"
 #>  [7] "RHC075__H1_B1__brown" "RHC077__H1_B1__brown" "RHC078__H1_B1__brown"
@@ -267,6 +267,39 @@ handsome.zuo <- CrossSCC(cl.no.batch, ncores = 56, mean.posterior.cutoff = 0.31,
 
 ``` r
 handsome.zuo$Get('sampleNames', filterFun = isLeaf)
+#> $`GO:0016233`
+#> $`GO:0016233`[[1]]
+#>  [1] "RHL1049__H1437__red"    "RHL1144__H1437__red"   
+#>  [3] "RHH1111__HCT116__green" "RHH1112__HCT116__green"
+#>  [5] "RHH1116__HCT116__green" "RHH1117__HCT116__green"
+#>  [7] "RHH1118__HCT116__green" "RHH1120__HCT116__green"
+#>  [9] "RHH1122__HCT116__green" "RHH1124__HCT116__green"
+#> [11] "RHH1126__HCT116__green" "RHH1128__HCT116__green"
+#> [13] "RHH1129__HCT116__green" "RHH1130__HCT116__green"
+#> [15] "RHH1131__HCT116__green" "RHH1133__HCT116__green"
+#> [17] "RHH1135__HCT116__green" "RHH1140__HCT116__green"
+#> [19] "RHH1141__HCT116__green" "RHH1144__HCT116__green"
+#> [21] "RHH1147__HCT116__green" "RHH1151__HCT116__green"
+#> [23] "RHH1153__HCT116__green" "RHH1154__HCT116__green"
+#> [25] "RHH1156__HCT116__green" "RHH1157__HCT116__green"
+#> [27] "RHH1158__HCT116__green" "RHH1160__HCT116__green"
+#> [29] "RHH1164__HCT116__green" "RHH1165__HCT116__green"
+#> [31] "RHH1166__HCT116__green" "RHH1169__HCT116__green"
+#> [33] "RHB1144__IMR90__black"  "RHB1168__IMR90__black" 
+#> [35] "RHB1181__IMR90__black"  "RHB1203__IMR90__black" 
+#> 
+#> $`GO:0016233`[[2]]
+#>  [1] "RHL1042__H1437__red"    "RHH1114__HCT116__green"
+#>  [3] "RHH1119__HCT116__green" "RHH1121__HCT116__green"
+#>  [5] "RHH1123__HCT116__green" "RHH1125__HCT116__green"
+#>  [7] "RHH1127__HCT116__green" "RHH1132__HCT116__green"
+#>  [9] "RHH1136__HCT116__green" "RHH1137__HCT116__green"
+#> [11] "RHH1138__HCT116__green" "RHH1142__HCT116__green"
+#> [13] "RHH1146__HCT116__green" "RHH1150__HCT116__green"
+#> [15] "RHH1167__HCT116__green" "RHH1170__HCT116__green"
+#> [17] "RHH1171__HCT116__green"
+#> 
+#> 
 #> $`GO:0032496`
 #> $`GO:0032496`[[1]]
 #>  [1] "RHL1003__H1437__red"   "RHL1010__H1437__red"  
@@ -304,40 +337,7 @@ handsome.zuo$Get('sampleNames', filterFun = isLeaf)
 #> [39] "RHB1202__IMR90__black"  "RHT110__K562__blue"    
 #> 
 #> 
-#> $`GO:0016233`
-#> $`GO:0016233`[[1]]
-#>  [1] "RHL1049__H1437__red"    "RHL1144__H1437__red"   
-#>  [3] "RHH1111__HCT116__green" "RHH1112__HCT116__green"
-#>  [5] "RHH1116__HCT116__green" "RHH1117__HCT116__green"
-#>  [7] "RHH1118__HCT116__green" "RHH1120__HCT116__green"
-#>  [9] "RHH1122__HCT116__green" "RHH1124__HCT116__green"
-#> [11] "RHH1126__HCT116__green" "RHH1128__HCT116__green"
-#> [13] "RHH1129__HCT116__green" "RHH1130__HCT116__green"
-#> [15] "RHH1131__HCT116__green" "RHH1133__HCT116__green"
-#> [17] "RHH1135__HCT116__green" "RHH1140__HCT116__green"
-#> [19] "RHH1141__HCT116__green" "RHH1144__HCT116__green"
-#> [21] "RHH1147__HCT116__green" "RHH1151__HCT116__green"
-#> [23] "RHH1153__HCT116__green" "RHH1154__HCT116__green"
-#> [25] "RHH1156__HCT116__green" "RHH1157__HCT116__green"
-#> [27] "RHH1158__HCT116__green" "RHH1160__HCT116__green"
-#> [29] "RHH1164__HCT116__green" "RHH1165__HCT116__green"
-#> [31] "RHH1166__HCT116__green" "RHH1169__HCT116__green"
-#> [33] "RHB1144__IMR90__black"  "RHB1168__IMR90__black" 
-#> [35] "RHB1181__IMR90__black"  "RHB1203__IMR90__black" 
-#> 
-#> $`GO:0016233`[[2]]
-#>  [1] "RHL1042__H1437__red"    "RHH1114__HCT116__green"
-#>  [3] "RHH1119__HCT116__green" "RHH1121__HCT116__green"
-#>  [5] "RHH1123__HCT116__green" "RHH1125__HCT116__green"
-#>  [7] "RHH1127__HCT116__green" "RHH1132__HCT116__green"
-#>  [9] "RHH1136__HCT116__green" "RHH1137__HCT116__green"
-#> [11] "RHH1138__HCT116__green" "RHH1142__HCT116__green"
-#> [13] "RHH1146__HCT116__green" "RHH1150__HCT116__green"
-#> [15] "RHH1167__HCT116__green" "RHH1170__HCT116__green"
-#> [17] "RHH1171__HCT116__green"
-#> 
-#> 
-#> $`GO:1904431`
+#> $`GO:0045214`
 #>  [1] "RHL1016__H1437__red"    "RHL1078__H1437__red"   
 #>  [3] "RHL1096__H1437__red"    "RHL1103__H1437__red"   
 #>  [5] "RHL1135__H1437__red"    "RHL1136__H1437__red"   
@@ -374,7 +374,7 @@ handsome.zuo$Get('sampleNames', filterFun = isLeaf)
 #> [67] "RHT106__K562__blue"     "RHT109__K562__blue"    
 #> [69] "RHT112__K562__blue"     "RHT113__K562__blue"    
 #> 
-#> $`GO:0048247`
+#> $`GO:0006646`
 #>  [1] "RHA015__A549__turquoise" "RHA016__A549__turquoise"
 #>  [3] "RHA017__A549__turquoise" "RHA018__A549__turquoise"
 #>  [5] "RHA028__A549__turquoise" "RHA029__A549__turquoise"
@@ -459,14 +459,9 @@ opt.res <- BayesianOptimization(test.CrossSCC,
                                 init_points = 50, n_iter = 20)
 ```
 
-## TODO list (sorted by priority in descending order)
+## Acknowledgement
 
-  - \[x\] Finish the function for ranking features with rated
-    components.
-  - \[x\] Finish the main function with parameters.
-  - \[x\] Design a method for visualizing the final pseudo decision
-    tree.
-  - \[x\] The result of fitting is somewhat random at the time. Try to
-    make it reproducible when needed.
-  - \[x\] Hide the plotting result of `boot.comp()`. Only keep it in
-    test mode.
+  - Thanks to [ScreenToGif](https://github.com/NickeManarin/ScreenToGif)
+    for producing gif images for this repo.
+  - Thanks to [Dr. Qi Zhao](http://seqworld.com) at SYSUCC for
+    suggestions on tree data structure and user experience.

@@ -210,11 +210,8 @@ opt.res <- BayesianOptimization(test.CrossSCC,
                                               lambda.cutoff = c(0, 1)),
                                 init_points = 50, n_iter = 20)
 ```
-  
-## TODO list (sorted by priority in descending order)
 
-- [x] Finish the function for ranking features with rated components.
-- [x] Finish the main function with parameters.
-- [x] Design a method for visualizing the final pseudo decision tree.
-- [x] The result of fitting is somewhat random at the time. Try to make it reproducible when needed.
-- [x] Hide the plotting result of `boot.comp()`. Only keep it in test mode.
+## Acknowledgement
+
+- Thanks to [ScreenToGif](https://github.com/NickeManarin/ScreenToGif) for producing gif images for this repo.
+- Thanks to [Dr. Qi Zhao](http://seqworld.com) at SYSUCC for suggestions on tree data structure and user experience.
