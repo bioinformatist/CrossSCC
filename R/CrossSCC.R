@@ -31,6 +31,7 @@ NULL
 #' @examples
 #' data('cl.b1')
 #' handsome.zuo <- CrossSCC(cl.b1[1:500,], ncores = 10, mean.posterior.cutoff = 0.18)
+# @todo Should use both metagenes and original genes as features.
 CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
                      mean.posterior.cutoff = 0.1,
                      ovl.cutoff = 0.05, mean.posterior.weight = 0.5, min.group.size = 0.1,

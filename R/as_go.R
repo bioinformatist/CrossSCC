@@ -1,3 +1,6 @@
+# @todo Clean up existed GO terms and build a database: remove terms if it has too many genes (>= 20% of all genes); Use Jaccard similarity coefficient to remove duplicated terms (> 0.9, keep the smaller one).
+# @todo Perform PCA on real data first: only genes in PCs with significant variance (PC1 + PC2 + ... + PCn >= 90%) will be kept.
+# @todo Support user-defined GO terms and geneset relationship.
 as_go <- function(m, ncores = 4, var.cutoff = 0.9, ontos = 'BP', mapping = "org.Hs.eg.db", verbose = FALSE, show.progress.bar = TRUE) {
   if (is(m, "ExpressionSet")) {
     m <- m
