@@ -2,9 +2,11 @@
 
 export(CrossSCC)
 import(R.utils)
-import(crayon)
 import(data.tree)
 import(visNetwork)
+importFrom(R.oo,isVisible)
+importFrom(crayon,bold)
+importFrom(crayon,green)
 importFrom(graphics,plot)
 importFrom(methods,is)
 importFrom(methods,new)

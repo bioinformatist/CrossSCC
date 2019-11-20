@@ -2,11 +2,13 @@
 #'
 #' @docType package
 #' @name CrossSCC
-#' @import crayon data.tree R.utils visNetwork
+#' @import data.tree R.utils visNetwork
 #' @importFrom graphics plot
 #' @importFrom methods is new
 #' @importFrom stats dnorm pnorm setNames
 #' @importFrom utils capture.output
+#' @importFrom R.oo isVisible
+#' @importFrom crayon green bold
 NULL
 
 #' CrossSCC

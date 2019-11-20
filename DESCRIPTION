@@ -21,7 +21,18 @@ Imports:
     data.tree,
     crayon,
     visNetwork,
-    R.utils
+    methods,
+    graphics,
+    utils,
+    stats,
+    Biobase,
+    genefilter,
+    topGO,
+    R.oo
 Depends: 
+    R (>= 3.5),
+    R.utils,
     snow
+biocViews: Software, GeneExpression, GUI, GeneSetEnrichment, Classification, Clustering,
+  RNASeq, BatchEffect, Normalization, Preprocessing, Visualization
 RoxygenNote: 6.1.1
