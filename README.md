@@ -393,6 +393,7 @@ library(CrossSCC)
 library(data.tree)
 library(stringr)
 library(clues)
+data("cl.7")
 test.CrossSCC <- function(mean.posterior.cutoff, ovl.cutoff, mean.posterior.weight, ovl.weight, lambda.cutoff) {
   tryCatch(
     {handsome.zuo <- CrossSCC(cl.7, ncores = 16, verbose = FALSE,
