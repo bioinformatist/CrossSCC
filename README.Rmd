@@ -34,6 +34,7 @@ knit_hooks$set(output = function(x, options) {
   hook_output(x, options)
 })
 ```
+
 # CrossSCC
 
 The goal of CrossSCC is to classify **S**ingle-**C**ell data(as expression matrix of scRNA-seq data) **Cross**ing batch into **C**lusters using Gaussian Mixture Model, and to find out the mapping relationship in clusters.
@@ -58,125 +59,41 @@ aria2c ftp://ftp.ncbi.nlm.nih.gov/geo/series/GSE81nnn/GSE81861/suppl/GSE81861_Ce
 pigz -d GSE81861_Cell_Line_FPKM.csv.gz
 ```
 
-### Two batches
-
-The matrix was read into R and the columns of two batch were selected as subsets  according to [the results part of the paper](https://www.nature.com/articles/ng.3818#results) "To assess batch effects, we performed scRNA–seq in two batches for GM12878 (lymphoblastoid) cells and also for H1 embryonic stem cells. Gene expression was quantified as fragments per kilobase per million reads (FPKM), and low-quality cells were discarded on the basis of multiple metrics":
+### Five types as well as batch 1 of two types
 
 ```r
-library(data.table)
-library(tidyverse)
-library(org.Hs.eg.db)
-library(usethis)
-library(genefilter)
-library(Biobase)
-rowVars <- function(x, ...) {
-  rowSums((x - rowMeans(x, ...))^2, ...)/(dim(x)[2] - 1)
-}
 cl <- fread('GSE81861_Cell_Line_FPKM.csv')
 names(cl)[1] <- 'Gene'
 cl[, Ensembl := str_match(Gene, ".+_(.+)\\.\\d+$")[, 2]]
 symbols <- mapIds(org.Hs.eg.db, keys = cl$Ensembl, keytype = "ENSEMBL", column="ENTREZID", multiVals = 'first')
 cl[, Entrez := symbols[Ensembl]]
 cl[, c('Gene', 'Ensembl'):= NULL]
-cl.b1 <- cbind(cl[, .(Entrez)], cl[, .SD, .SDcols = names(cl) %like% "_B1_"])
-cl.b2 <- cbind(cl[, .(Entrez)], cl[, .SD, .SDcols = names(cl) %like% "_B2_"])
-cl <- lapply(list(cl.b1, cl.b2), function(x) x[, var := rowVars(.SD), .SDcols = -c('Entrez')])
-cl <- lapply(cl, function(x) x[, max.var := max(var), by = 'Entrez'][var != 0 & max.var == var & !is.na(Entrez), ])
-cl <- lapply(cl, function(x) x[, grep("var", colnames(x)) := NULL])
-cl <- lapply(cl, function(x) as.data.frame(x) %>% remove_rownames %>% column_to_rownames(var = "Entrez"))
-cl <- lapply(cl, function(x) new("ExpressionSet", exprs=as.matrix(x), annotation = 'org.Hs.eg.db'))
-cl.b1 <- cl[[1]]
-cl.b2 <- cl[[2]]
-# setwd() back to package root directory
-use_data(cl.b1, compress = 'xz')
-use_data(cl.b2, compress = 'xz')
-```
-
-Thus, the `matrix` object `cl.b1` contains *GM12878* and *H1* cell of batch 1, and `cl.b2` contains those of batch 2.
-
-### Five types in same batch
-
-```r
-# Package library omitted
-cl <- fread('GSE81861_Cell_Line_FPKM.csv')
-names(cl)[1] <- 'Gene'
-cl[, Ensembl := str_match(Gene, ".+_(.+)\\.\\d+$")[, 2]]
-symbols <- mapIds(org.Hs.eg.db, keys = cl$Ensembl, keytype = "ENSEMBL", column="ENTREZID", multiVals = 'first')
-cl[, Entrez := symbols[Ensembl]]
-cl[, c('Gene', 'Ensembl'):= NULL]
-cl <- cbind(cl[, .(Entrez)], cl[, .SD, .SDcols = !(names(cl) %like% "_B[[:digit:]]{1}_")])
+cl <- cbind(cl[, .(Entrez)], cl[, .SD, .SDcols = !(names(cl) %like% "_B2_")])
 cl[, var := rowVars(.SD), .SDcols = -c('Entrez')]
 cl <- cl[, max.var := max(var), by = 'Entrez'][var != 0 & max.var == var & !is.na(Entrez), ]
 cl[, grep("var", colnames(cl)) := NULL]
 cl <- as.data.frame(cl) %>% remove_rownames %>% column_to_rownames(var = "Entrez")
 cl <- cl[, !(names(cl) %in% 'Entrez')]
-cl.no.batch <- new("ExpressionSet", exprs=as.matrix(cl), annotation = 'org.Hs.eg.db')
+cl.7 <- new("ExpressionSet", exprs=as.matrix(cl), annotation = 'org.Hs.eg.db')
 # setwd() back to package root directory
-use_data(cl.no.batch, compress = 'xz')
+use_data(cl.7, compress = 'xz')
 ```
 
-`cl.no.batch` contains samples with five types in same batch.
+## How to use & performance
 
-## Usage && Assessment
-
-### On [Batch 1](#two-batches)
-
-```{r batch 1 run main function, message=FALSE, warning=FALSE}
+```{r}
 library(CrossSCC)
-data("cl.b1")
-# Fixed seed means fixed mu and sigma during normalmixEM()
-set.seed(920304)
-handsome.zuo <- CrossSCC(cl.b1, ncores = 56, mean.posterior.cutoff = 0.31, verbose = FALSE)
-```
-
-To visualize the result (currently still too simple):
-
-```r
-plot(handsome.zuo)
-```
-
-As we known, samples should be devided into two types, so just check nodes at level 2 now:
-
-```{r batch 1 check sample names}
+data("cl.7")
+(handsome.zuo <- CrossSCC(cl.7, ncores = 16, mean.posterior.cutoff = 3.000000e-01, ovl.cutoff = 4.588144e-01, mean.posterior.weight = 2.220446e-16, ovl.weight = 2.220446e-16, lambda.cutoff = 5.198353e-01, verbose = FALSE))
 library(data.tree)
-handsome.zuo$Get('sampleNames', filterFun = isLeaf)
-```
-
-It seems only **one** sample `"RHC092__H1_B1__brown"` was incorrectly classified.
-
-To list full relationship between cluster and samples:
-
-```{r batch 1 cluster-sample relationship}
-(cl2 <- unname(lapply(rapply(handsome.zuo$Get('sampleNames', filterFun = isLeaf), enquote, how = 'unlist'), eval)))
-```
-
-To calculate ARI (Adjusted Rand Index):
-
-```{r batch 1 ARI}
-library(clues)
-# Convert sample names to binary values
-cl1 <- ifelse(grepl('GM12878_B1', colnames(cl.b1)), 1, 2)
-# Map samples to clusters in result
-cl2 <- vapply(colnames(cl.b1), function(y) which(sapply(cl2, function(x) y %in% x)), 2333, USE.NAMES = FALSE)
-# Calculate Adjusted Rand Index
-adjustedRand(cl1, cl2, 'Rand')
-```
-
-### On [Five Samples](#five-types-in-same-batch)
-
-```{r five samples run, message=FALSE, warning=FALSE}
-data('cl.no.batch')
-handsome.zuo <- CrossSCC(cl.no.batch, ncores = 56, mean.posterior.cutoff = 0.31, verbose = FALSE)
-```
-
-```{r five samples display}
-handsome.zuo$Get('sampleNames', filterFun = isLeaf)
-cl2 <- unname(lapply(rapply(handsome.zuo$Get('sampleNames', filterFun = isLeaf), enquote, how = 'unlist'), eval))
-cl2 <- vapply(colnames(cl.no.batch), function(y) which(sapply(cl2, function(x) y %in% x)), 2333, USE.NAMES = FALSE)
+handsome.zuo$Get('sampleNames', filterFun = isLeaf, simplify = FALSE)
 library(stringr)
-cl1 <- factor(str_match(colnames(cl.no.batch), '__(.+)__')[, 2])
-levels(cl1) <- seq_len(5)
+cl1 <- factor(str_match(colnames(cl.7), '__(.+?)_')[, 2])
+levels(cl1) <- seq_len(7)
 cl1 <- as.character(cl1)
+cl2 <- unname(lapply(rapply(handsome.zuo$Get('sampleNames', filterFun = isLeaf), enquote, how = 'unlist'), eval))
+cl2 <- vapply(colnames(cl.7), function(y) which(vapply(cl2, function(x) y %in% x, logical(1))), 2333, USE.NAMES = FALSE)
+library(clues)
 adjustedRand(cl1, cl2, 'Rand')
 ```
 
@@ -188,27 +105,36 @@ plot_CrossSCC(handsome.zuo)
 
 ![](man/figures/readme2.gif)
 
-## Find best parameter combination by Bayesion Optimization (not finished yet)
+## Find best parameter combination by Bayesion Optimization
 
 ```r
+library(rBayesianOptimization)
+library(CrossSCC)
+library(data.tree)
+library(stringr)
+library(clues)
 test.CrossSCC <- function(mean.posterior.cutoff, ovl.cutoff, mean.posterior.weight, ovl.weight, lambda.cutoff) {
-  handsome.zuo <- suppressMessages(CrossSCC(cl.b1[1:500], ncores = 10,
+  tryCatch(
+    {handsome.zuo <- CrossSCC(cl.7, ncores = 16, verbose = FALSE,
                                             mean.posterior.cutoff = mean.posterior.cutoff,
                            ovl.cutoff = ovl.cutoff, mean.posterior.weight = mean.posterior.weight,
-                           ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff))
-  cl2 <- unname(lapply(rapply(handsome.zuo$Get('sampleNames', filterFun = isLeaf),
-                              enquote, how = 'unlist'), eval))
-  cl2 <- vapply(colnames(cl.b1), function(y) which(vapply(cl2, function(x) y %in% x, logical(1))),
-                2333, USE.NAMES = FALSE)
-  cl1 <- ifelse(grepl('GM12878_B1', colnames(cl.b1)), 1, 2)
-  list(Score = adjustedRand(cl1, cl2, 'Rand'), Pred = 0)
+                           ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff)
+    cl1 <- factor(str_match(colnames(cl.7), '__(.+?)_')[, 2])
+    levels(cl1) <- seq_len(7)
+    cl1 <- as.character(cl1)
+    cl2 <- unlist(handsome.zuo$Get('sampleNames', filterFun = isLeaf, simplify = FALSE))
+    cl2 <- factor(str_match(cl2, '__(.+?)_')[, 2])
+    levels(cl2) <- seq_len(7)
+    cl2 <- as.character(cl2)
+    list(Score = adjustedRand(cl1, cl2, 'Rand'), Pred = 0)}, error=function(e) list(Score = 0, Pred = 0)
+  )
 }
 
 opt.res <- BayesianOptimization(test.CrossSCC,
-                                bounds = list(mean.posterior.cutoff = c(0.15, 0.2), ovl.cutoff = c(0, 1),
+                                bounds = list(mean.posterior.cutoff = c(0, 0.5), ovl.cutoff = c(0, 0.5),
                                               mean.posterior.weight = c(0, 1), ovl.weight = c(0, 1),
-                                              lambda.cutoff = c(0, 1)),
-                                init_points = 50, n_iter = 20)
+                                              lambda.cutoff = c(0.5, 1)),
+                                init_points = 20, n_iter = 100)
 ```
 
 ## Acknowledgement
