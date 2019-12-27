@@ -10,8 +10,8 @@ Authors@R:
 Description: An Single-Cell Clustering framework for multiple batch data analysis.
 License: GPL-3
 Encoding: UTF-8
-URL: https://github.com/bioinformatist/GMMClassifier
-BugReports: https://github.com/bioinformatist/GMMClassifier/issues
+URL: https://github.com/bioinformatist/CrossSCC
+BugReports: https://github.com/bioinformatist/CrossSCC/issues
 Imports: 
     mixtools,
     memoise,
@@ -28,7 +28,10 @@ Imports:
     Biobase,
     genefilter,
     topGO,
-    R.oo
+    R.oo,
+    AnnotationDbi,
+    ggplot2,
+    org.Hs.eg.db
 Depends: 
     R (>= 3.5),
     R.utils,
