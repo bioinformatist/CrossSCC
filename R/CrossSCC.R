@@ -9,6 +9,7 @@
 #' @importFrom utils capture.output
 #' @importFrom R.oo isVisible
 #' @importFrom crayon green bold
+#' @importFrom org.Hs.eg.db org.Hs.eg.db
 NULL
 
 #' CrossSCC
@@ -27,7 +28,7 @@ NULL
 #' @param verbose verbose level. By default, CrossSCC will output all logs as well as progress bars.
 #' @param show.progress.bar Set to FALSE if you don't want to see progress bar.
 #'
-#' @return a data.tree object
+#' @return a data.tree object.
 #' @export
 #'
 #' @examples
@@ -37,7 +38,7 @@ NULL
 # @todo Intergrate cellassign.
 # @todo Shiny app.
 CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
-                     mean.posterior.cutoff = 0.1,
+                     simple.mapping = 'org.HsSimple.eg.db', mean.posterior.cutoff = 0.3,
                      ovl.cutoff = 0.05, mean.posterior.weight = 0.5, min.group.size = 0.1,
                      ovl.weight = 0.5, lambda.cutoff = 0.9, ontos = 'BP',
                      verbose = R.utils::Verbose(threshold = -1), show.progress.bar = TRUE) {
@@ -45,7 +46,7 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
     show.progress.bar <- FALSE
   }
 
-  m <- as_go(m, ncores = ncores, var.cutoff = var.cutoff, ontos = ontos,
+  m <- as_go(m, ncores = ncores, var.cutoff = var.cutoff, ontos = ontos, simple.mapping = simple.mapping,
              mapping = mapping, verbose = verbose, show.progress.bar = show.progress.bar)
 
   verbose && newline(verbose)
@@ -63,6 +64,12 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
 
   # Cut redundant nodes
   Prune(result, function(x) length(x$siblings))
+  # Expand leaves as two components
+  result$Do(function(x) lapply(seq_along(x$sampleNames),
+                               function(i) x$AddChild(paste0(x$name, '\nsub-component ', i),
+                                                      sampleNames = x$sampleNames[[i]])),
+            filterFun = function(x) isLeaf(x) & is.list(x$sampleNames))
+
 
   verbose && newline(verbose)
   verbose && header(verbose, 'CrossSCC finished!
@@ -162,15 +169,21 @@ rank_feature <- function(m, mol = 0, ncores, mean.posterior.cutoff, var.cutoff, 
               ', working on its child (decision/terminal) node: ', emphasize('#'), emphasize(nnode), indent = 0)
       verbose && enter(verbose, '\tDetermined as ', emphasize('decision node'), '. ',
                        emphasize(best.name), ' was chosen as representative feature', indent = 0)
-      FindNode(result$root, decision.node)$AddChild(best.name,
-                                                    sampleNames = list(best.feature[['comp.1']],
-                                                                       best.feature[['comp.2']]))
+      # Should use Traverse() here for FindNode() can only return the 1st node who matches
+      # CAN NOT use Do() for all nodes kept after filtering will be performed same operation
+      Traverse(result$root,traversal = "post-order",
+               filterFun = function(x) x$name == decision.node)[[1]]$AddChild(best.name,
+                                                                              sampleNames = list(best.feature[['comp.1']],
+                                                                                                 best.feature[['comp.2']]))
 
       if (length(best.feature[['comp.1']]) >= (min.group.size * mol)) {
         pending.node <- pending.node + 1
-        # Must use FindNode here, for result is a reference
+        # Must use Traverse() here, for result is a reference
         rank_feature(m[, best.feature[['comp.1']]], mol = mol, ncores = ncores,
-                     decision.node = best.name, nnode = 1, result = FindNode(result$root, best.name),
+                     decision.node = best.name, nnode = 1,
+                     # Traverse() will return all matched nodes, we use the 1st one in according to "post-order"
+                     result = Traverse(result$root,traversal = "post-order",
+                                       filterFun = function(x) x$name == best.name)[[1]],
                      mean.posterior.cutoff = mean.posterior.cutoff, ovl.cutoff = ovl.cutoff,
                      mean.posterior.weight= mean.posterior.weight, min.group.size = min.group.size,
                      ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff,
@@ -181,7 +194,9 @@ rank_feature <- function(m, mol = 0, ncores, mean.posterior.cutoff, var.cutoff, 
       if (length(best.feature[['comp.2']]) >= (min.group.size * mol)) {
         pending.node <- pending.node + 1
         rank_feature(m[, best.feature[['comp.2']]], mol = mol, ncores = ncores,
-                     decision.node = best.name, nnode = 2, result = FindNode(result$root, best.name),
+                     decision.node = best.name, nnode = 2,
+                     result = Traverse(result$root,traversal = "post-order",
+                                       filterFun = function(x) x$name == best.name)[[1]],
                      mean.posterior.cutoff = mean.posterior.cutoff, ovl.cutoff = ovl.cutoff,
                      mean.posterior.weight= mean.posterior.weight, min.group.size = min.group.size,
                      ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff, verbose = verbose,
