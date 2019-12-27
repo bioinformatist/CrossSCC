@@ -2,7 +2,8 @@ rate_feature <- function(feature, sample.names, mean.posterior.cutoff = 0.1, ovl
   # We only use GMM with 2 components as more components may cause overfitting
   # 2 components may not be the best fitting model, thus one will cause variance closing to 0 and Inf log-likelihood
   # Must set a small-enough epsilon for robustness
-  capture.output(a.optim <- tryCatch(mixtools::normalmixEM(feature, k = 2, epsilon = 1e-16), error=function(e) NULL))
+  set.seed(1118)
+  capture.output(a.optim <- tryCatch(mixtools::normalmixEM(feature, k = 2), error=function(e) NULL))
   # No good boy
   if (is.null(a.optim)) {
     return()
