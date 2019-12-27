@@ -19,6 +19,16 @@ install.packages("remotes")
 remotes::install_github("bioinformatist/CrossSCC")
 ```
 
+Besides, you also need a database
+[org.HsSimple.eg.db](https://github.com/bioinformatist/org.HsSimple.eg.db)
+provided by us: First download the [latest release
+tarball](https://github.com/bioinformatist/org.HsSimple.eg.db/releases),
+then run:
+
+``` r
+install.packages("./org.HsSimple.eg.db", repos=NULL)
+```
+
 ## Example dataset
 
 The example data used in this project is part of

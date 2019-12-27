@@ -50,6 +50,12 @@ install.packages("remotes")
 remotes::install_github("bioinformatist/CrossSCC")
 ```
 
+Besides, you also need a database [org.HsSimple.eg.db](https://github.com/bioinformatist/org.HsSimple.eg.db) provided by us: First download the [latest release tarball](https://github.com/bioinformatist/org.HsSimple.eg.db/releases), then run:
+
+```r
+install.packages("./org.HsSimple.eg.db", repos=NULL)
+```
+
 ## Example dataset
 
 The example data used in this project is part of [GSE81861](https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE81861) from [this paper](https://www.nature.com/articles/ng.3818#accessions). First, the FPKM matrix file of all cells was downloaded:
