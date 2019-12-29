@@ -90,7 +90,7 @@ use_data(cl.7, compress = 'xz')
 ```{r}
 library(CrossSCC)
 data("cl.7")
-(handsome.zuo <- CrossSCC(cl.7, ncores = 16, mean.posterior.cutoff = 3.000000e-01, ovl.cutoff = 4.588144e-01, mean.posterior.weight = 2.220446e-16, ovl.weight = 2.220446e-16, lambda.cutoff = 5.198353e-01, verbose = FALSE))
+(handsome.zuo <- CrossSCC(cl.7, ncores = 16, mean.posterior.cutoff = 0.1036, ovl.cutoff = 0.1864, mean.posterior.weight = 0.2557,	ovl.weight = 0.6198, lambda.cutoff = 0.7750, verbose = FALSE))
 library(data.tree)
 handsome.zuo$Get('sampleNames', filterFun = isLeaf, simplify = FALSE)
 library(stringr)
@@ -98,7 +98,8 @@ cl1 <- factor(str_match(colnames(cl.7), '__(.+?)_')[, 2])
 levels(cl1) <- seq_len(7)
 cl1 <- as.character(cl1)
 cl2 <- unname(lapply(rapply(handsome.zuo$Get('sampleNames', filterFun = isLeaf), enquote, how = 'unlist'), eval))
-cl2 <- vapply(colnames(cl.7), function(y) which(vapply(cl2, function(x) y %in% x, logical(1))), 2333, USE.NAMES = FALSE)
+cl2 <- vapply(colnames(cl.7), function(y) which(vapply(cl2, function(x) y %in% x,
+                                                       logical(1))), 2333, USE.NAMES = FALSE)
 library(clues)
 adjustedRand(cl1, cl2, 'Rand')
 ```
@@ -129,10 +130,9 @@ test.CrossSCC <- function(mean.posterior.cutoff, ovl.cutoff, mean.posterior.weig
     cl1 <- factor(str_match(colnames(cl.7), '__(.+?)_')[, 2])
     levels(cl1) <- seq_len(7)
     cl1 <- as.character(cl1)
-    cl2 <- unlist(handsome.zuo$Get('sampleNames', filterFun = isLeaf, simplify = FALSE))
-    cl2 <- factor(str_match(cl2, '__(.+?)_')[, 2])
-    levels(cl2) <- seq_len(7)
-    cl2 <- as.character(cl2)
+    cl2 <- unname(lapply(rapply(handsome.zuo$Get('sampleNames', filterFun = isLeaf), enquote, how = 'unlist'), eval))
+    cl2 <- vapply(colnames(cl.7), function(y) which(vapply(cl2, function(x) y %in% x, 
+                                                           logical(1))), 2333, USE.NAMES = FALSE)
     list(Score = adjustedRand(cl1, cl2, 'Rand'), Pred = 0)}, error=function(e) list(Score = 0, Pred = 0)
   )
 }
