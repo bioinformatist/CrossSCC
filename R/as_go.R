@@ -30,11 +30,11 @@ as_go <- function(m, ncores = 4, var.cutoff = 0.9, ontos = 'BP', simple.mapping 
   m <- Biobase::exprs(genefilter::varFilter(m, var.cutoff = var.cutoff))
 
   # Perform filtering based on PCA result
-  m.pca <- prcomp(t(m))
-  m.summary <- summary(m.pca)
-  loadings <- m.pca$rotation[, seq_len(which(m.summary$importance[3,] > 0.9)[1])]
-  loadings.logic <- apply(abs(loadings) > 0.05, 1, any)
-  m <- m[names(loadings.logic[loadings.logic == TRUE]),]
+  # m.pca <- prcomp(t(m))
+  # m.summary <- summary(m.pca)
+  # loadings <- m.pca$rotation[, seq_len(which(m.summary$importance[3,] > 0.9)[1])]
+  # loadings.logic <- apply(abs(loadings) > 0.05, 1, any)
+  # m <- m[names(loadings.logic[loadings.logic == TRUE]),]
 
   verbose && header(verbose, 'Performing Gene Ontology based meta-gene annotation using ontology level(s): ',
                     emphasize(ontos), char = emojifont::emoji("sunflower"))
