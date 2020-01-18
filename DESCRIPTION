@@ -31,7 +31,8 @@ Imports:
     R.oo,
     AnnotationDbi,
     ggplot2,
-    org.Hs.eg.db
+    org.Hs.eg.db,
+    data.table
 Depends: 
     R (>= 3.5),
     R.utils,

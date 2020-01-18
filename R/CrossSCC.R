@@ -2,7 +2,7 @@
 #'
 #' @docType package
 #' @name CrossSCC
-#' @import data.tree R.utils visNetwork
+#' @import data.tree R.utils visNetwork data.table
 #' @importFrom graphics plot
 #' @importFrom methods is new
 #' @importFrom stats dnorm pnorm setNames
@@ -46,7 +46,7 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
     show.progress.bar <- FALSE
   }
 
-  m <- as_go(m, ncores = ncores, var.cutoff = var.cutoff, ontos = ontos, simple.mapping = simple.mapping,
+  m <- as_go(m, ncores = ncores, var.cutoff = var.cutoff, ontos = ontos,
              mapping = mapping, verbose = verbose, show.progress.bar = show.progress.bar)
 
   verbose && newline(verbose)
