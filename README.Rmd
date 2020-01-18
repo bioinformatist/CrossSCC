@@ -90,7 +90,7 @@ use_data(cl.7, compress = 'xz')
 ```{r}
 library(CrossSCC)
 data("cl.7")
-(handsome.zuo <- CrossSCC(cl.7, ncores = 16, mean.posterior.cutoff = 0.3475, ovl.cutoff = 0.2682, mean.posterior.weight = 0.0000, ovl.weight = 0.7094, lambda.cutoff = 0.8587, verbose = FALSE))
+(handsome.zuo <- CrossSCC(cl.7, ncores = 16, mean.posterior.cutoff = 0.2814, ovl.cutoff = 0.1265, mean.posterior.weight = 1.0000, ovl.weight = 0.3586, lambda.cutoff = 0.9277, verbose = FALSE))
 library(data.tree)
 handsome.zuo$Get('sampleNames', filterFun = isLeaf, simplify = FALSE)
 library(stringr)
