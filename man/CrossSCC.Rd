@@ -7,7 +7,7 @@
 \title{CrossSCC: An Single-Cell Clustering analysis framework Crossing batches of data}
 \usage{
 CrossSCC(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
-  simple.mapping = "org.HsSimple.eg.db", mean.posterior.cutoff = 0.1,
+  simple.mapping = "org.HsSimple.eg.db", mean.posterior.cutoff = 0.3,
   ovl.cutoff = 0.05, mean.posterior.weight = 0.5,
   min.group.size = 0.1, ovl.weight = 0.5, lambda.cutoff = 0.9,
   ontos = "BP", verbose = R.utils::Verbose(threshold = -1),
