@@ -152,13 +152,15 @@ library(clues)
 adjustedRand(cl1, cl2, 'Rand')
 ```
 
-### With dataset ["Immune Cells"](#immune-Cells)
+### With dataset ["Immune Cells"](#immune-cells)
+
+> The parameters have **NOT** optimized now for this part.
 
 ```r
 data("immu")
-(handsome.zuo <- CrossSCC(immu, ncores = 16, mean.posterior.cutoff = 0.3475, ovl.cutoff = 0.2682, mean.posterior.weight = 0.0000, ovl.weight = 0.7094, lambda.cutoff = 0.8587))
+(handsome.zuo <- CrossSCC(immu, ncores = 16, mean.posterior.cutoff = 0.4459, ovl.cutoff = 0.4243, mean.posterior.weight = 0.2988, ovl.weight = 0.3771, lambda.cutoff = 0.6736, verbose = FALSE))
 handsome.zuo$Get('sampleNames', filterFun = isLeaf, simplify = FALSE)
-cl1 <- factor(str_match(colnames(immu), '(.+?)_.+')[, 2])
+cl1 <- sort(factor(str_match(colnames(immu), '(.+?)_.+')[, 2]))
 levels(cl1) <- seq_len(40)
 cl1 <- as.character(cl1)
 cl2 <- unname(lapply(rapply(handsome.zuo$Get('sampleNames', filterFun = isLeaf), enquote, how = 'unlist'), eval))
@@ -221,13 +223,16 @@ library(clues)
 data("immu")
 test.CrossSCC <- function(mean.posterior.cutoff, ovl.cutoff, mean.posterior.weight, ovl.weight, lambda.cutoff) {
   tryCatch(
+    # For one type contains only 11 samples, the minimum group size filter should be turned off
     {handsome.zuo <- CrossSCC(immu, ncores = 16, verbose = FALSE,
                                             mean.posterior.cutoff = mean.posterior.cutoff,
                            ovl.cutoff = ovl.cutoff, mean.posterior.weight = mean.posterior.weight,
-                           ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff)
-    cl1 <- factor(str_match(colnames(immu), '(.+?)_.+')[, 2])
+                           ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff, min.group.size = 11)
+    # Original sample is disordered
+    cl1 <- sort(factor(str_match(colnames(immu), '(.+?)_.+')[, 2]))
     levels(cl1) <- seq_len(40)
     cl1 <- as.character(cl1)
+    # table(cl1)
     cl2 <- unname(lapply(rapply(handsome.zuo$Get('sampleNames', filterFun = isLeaf), enquote, how = 'unlist'), eval))
     cl2 <- vapply(colnames(immu), function(y) which(vapply(cl2, function(x) y %in% x, 
                                                            logical(1))), 2333, USE.NAMES = FALSE)
