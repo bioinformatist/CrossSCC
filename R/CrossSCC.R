@@ -15,7 +15,7 @@ NULL
 #' CrossSCC
 #'
 #' @param m a matrix of single cell expression values.
-#' @param ncores number of CPU cores used. Caution: By default, CrossSCC will try use all CPU cores, which may cause "core dumped" error.
+#' @param ncores number of CPU cores used.
 #' @param var.cutoff cutoff value when filtering features.
 #' @param mapping database package name according to organism. e.g. "org.Hs.eg.db".
 #' @param mean.posterior.cutoff cutoff value for mean posterior of each component when rating Gaussion Mixture Model.
@@ -23,10 +23,13 @@ NULL
 #' @param mean.posterior.weight the weight for mean.posterior.cutoff when assessing the performance of the model.
 #' @param ovl.weight the weight for ovl.cutoff when assessing the performance of the model.
 #' @param lambda.cutoff Gaussian components with lambda over this cutoff value will be classified as a model representing a subtype of samples.
-#' @param ontos ontology terms used when converting features to meta-gene features. Default is "BP", could be arbitrary combination of c('BP', 'MF', 'CC').
-#' @param min.group.size minimal final group size (sample number). Only groups has more samples than this threshold will be further splitted.
+#' @param ontos ontology terms used when converting features to meta-gene features.
+#' Default is "BP", could be arbitrary combination of c('BP', 'MF', 'CC').
+#' @param min.group.ratio minimal final group ratio (proportion of all sample number).
+#' At each decision node, only groups has more samples than this threshold will be further splitted.
 #' @param verbose verbose level. By default, CrossSCC will output all logs as well as progress bars.
 #' @param show.progress.bar Set to FALSE if you don't want to see progress bar.
+#' @param min.group.size minimal final group size. Note: this parameter will overwrite parameter min.group.ratio.
 #'
 #' @return a data.tree object.
 #' @export
@@ -34,13 +37,10 @@ NULL
 #' @examples
 #' data('cl.b1')
 #' handsome.zuo <- CrossSCC(cl.b1[1:500,], ncores = 10, mean.posterior.cutoff = 0.18)
-# @todo Should use both metagenes and original genes as features.
-# @todo Intergrate cellassign.
-# @todo Shiny app.
 CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
-                     simple.mapping = 'org.HsSimple.eg.db', mean.posterior.cutoff = 0.3,
-                     ovl.cutoff = 0.05, mean.posterior.weight = 0.5, min.group.size = 0.1,
-                     ovl.weight = 0.5, lambda.cutoff = 0.9, ontos = 'BP',
+                     mean.posterior.cutoff = 0.3,
+                     ovl.cutoff = 0.05, mean.posterior.weight = 0.5, min.group.ratio = 0.1,
+                     ovl.weight = 0.5, lambda.cutoff = 0.9, ontos = 'BP', min.group.size = NULL,
                      verbose = R.utils::Verbose(threshold = -1), show.progress.bar = TRUE) {
   if (!verbose) {
     show.progress.bar <- FALSE
@@ -58,7 +58,7 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
 
   result <- rank_feature(m, ncores = ncores, mean.posterior.cutoff = mean.posterior.cutoff,
                          ovl.cutoff = ovl.cutoff, mean.posterior.weight= mean.posterior.weight,
-                         min.group.size = min.group.size,
+                         min.group.ratio = min.group.ratio, min.group.size = min.group.size,
                          ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff,
                          result = NULL, verbose = verbose, show.progress.bar = show.progress.bar)
 
@@ -84,9 +84,9 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
 
 # https://stackoverflow.com/a/39926819
 # To avoid using <<-, I use function parameter instead of "global variables"
-rank_feature <- function(m, mol = 0, ncores, mean.posterior.cutoff, var.cutoff, ovl.cutoff,
-                         mean.posterior.weight, ovl.weight, lambda.cutoff, min.group.size,
-                         nnode = 1, decision.node = NULL, pending.node = 0,
+rank_feature <- function(m, ncores, mean.posterior.cutoff, var.cutoff, ovl.cutoff,
+                         mean.posterior.weight, ovl.weight, lambda.cutoff, min.group.ratio,
+                         nnode = 1, decision.node = NULL, pending.node = 0, min.group.size,
                          result, verbose = FALSE, show.progress.bar = TRUE) {
 
   # Matrix with too few features need NOT paralleled computing
@@ -142,26 +142,29 @@ rank_feature <- function(m, mol = 0, ncores, mean.posterior.cutoff, var.cutoff, 
     best.feature <- good.feature[[best.name]]
     # First node is root
     if (is.null(decision.node)) {
-      mol <- NCOL(m)
+      if (is.null(min.group.size)) {
+        min.group.size <- min.group.ratio * NCOL(m)
+      }
+
       verbose && enter(verbose, emphasize(best.name), ' was chosen as root node', indent = 0)
       # Initialize whole tree here
       result <- Node$new(best.name, sampleNames = list(best.feature[['comp.1']], best.feature[['comp.2']]))
 
-      if (length(best.feature[['comp.1']]) >= (min.group.size * mol)) {
-        rank_feature(m[, best.feature[['comp.1']]], mol = mol, ncores = ncores,
+      if (length(best.feature[['comp.1']]) > min.group.size) {
+        rank_feature(m[, best.feature[['comp.1']]], ncores = ncores,
                      decision.node = best.name, nnode = 1, result = result$root,
                      mean.posterior.cutoff = mean.posterior.cutoff, ovl.cutoff = ovl.cutoff,
-                     mean.posterior.weight= mean.posterior.weight, min.group.size = min.group.size,
-                     ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff,
+                     mean.posterior.weight= mean.posterior.weight, min.group.ratio = min.group.ratio,
+                     ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff, min.group.size = min.group.size,
                      verbose = verbose, show.progress.bar = show.progress.bar)
       }
 
-      if (length(best.feature[['comp.2']]) >= (min.group.size * mol)) {
-        rank_feature(m[, best.feature[['comp.2']]], mol = mol, ncores = ncores,
+      if (length(best.feature[['comp.2']]) > min.group.size) {
+        rank_feature(m[, best.feature[['comp.2']]], ncores = ncores,
                      decision.node = best.name, nnode = 2, result = result$root,
                      mean.posterior.cutoff = mean.posterior.cutoff, ovl.cutoff = ovl.cutoff,
-                     mean.posterior.weight= mean.posterior.weight, min.group.size = min.group.size,
-                     ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff,
+                     mean.posterior.weight= mean.posterior.weight, min.group.ratio = min.group.ratio,
+                     ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff, min.group.size = min.group.size,
                      verbose = verbose, show.progress.bar = show.progress.bar)
       }
     } else {
@@ -176,30 +179,31 @@ rank_feature <- function(m, mol = 0, ncores, mean.posterior.cutoff, var.cutoff, 
                                                                               sampleNames = list(best.feature[['comp.1']],
                                                                                                  best.feature[['comp.2']]))
 
-      if (length(best.feature[['comp.1']]) >= (min.group.size * mol)) {
+      if (length(best.feature[['comp.1']]) > min.group.size) {
         pending.node <- pending.node + 1
         # Must use Traverse() here, for result is a reference
-        rank_feature(m[, best.feature[['comp.1']]], mol = mol, ncores = ncores,
+        rank_feature(m[, best.feature[['comp.1']]], ncores = ncores,
                      decision.node = best.name, nnode = 1,
                      # Traverse() will return all matched nodes, we use the 1st one in according to "post-order"
                      result = Traverse(result$root,traversal = "post-order",
                                        filterFun = function(x) x$name == best.name)[[1]],
                      mean.posterior.cutoff = mean.posterior.cutoff, ovl.cutoff = ovl.cutoff,
-                     mean.posterior.weight= mean.posterior.weight, min.group.size = min.group.size,
-                     ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff,
+                     mean.posterior.weight= mean.posterior.weight, min.group.ratio = min.group.ratio,
+                     ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff, min.group.size = min.group.size,
                      verbose = verbose, show.progress.bar = show.progress.bar)
         pending.node <- pending.node - 1
       }
 
-      if (length(best.feature[['comp.2']]) >= (min.group.size * mol)) {
+      if (length(best.feature[['comp.2']]) > min.group.size) {
         pending.node <- pending.node + 1
-        rank_feature(m[, best.feature[['comp.2']]], mol = mol, ncores = ncores,
+        rank_feature(m[, best.feature[['comp.2']]], ncores = ncores,
                      decision.node = best.name, nnode = 2,
                      result = Traverse(result$root,traversal = "post-order",
                                        filterFun = function(x) x$name == best.name)[[1]],
                      mean.posterior.cutoff = mean.posterior.cutoff, ovl.cutoff = ovl.cutoff,
-                     mean.posterior.weight= mean.posterior.weight, min.group.size = min.group.size,
+                     mean.posterior.weight= mean.posterior.weight, min.group.ratio = min.group.ratio,
                      ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff, verbose = verbose,
+                     min.group.size = min.group.size,
                      show.progress.bar = show.progress.bar)
         pending.node <- pending.node - 1
       }

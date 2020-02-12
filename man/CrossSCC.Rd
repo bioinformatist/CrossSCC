@@ -7,16 +7,16 @@
 \title{CrossSCC: An Single-Cell Clustering analysis framework Crossing batches of data}
 \usage{
 CrossSCC(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
-  simple.mapping = "org.HsSimple.eg.db", mean.posterior.cutoff = 0.3,
-  ovl.cutoff = 0.05, mean.posterior.weight = 0.5,
-  min.group.size = 0.1, ovl.weight = 0.5, lambda.cutoff = 0.9,
-  ontos = "BP", verbose = R.utils::Verbose(threshold = -1),
+  mean.posterior.cutoff = 0.3, ovl.cutoff = 0.05,
+  mean.posterior.weight = 0.5, min.group.ratio = 0.1,
+  ovl.weight = 0.5, lambda.cutoff = 0.9, ontos = "BP",
+  min.group.size = NULL, verbose = R.utils::Verbose(threshold = -1),
   show.progress.bar = TRUE)
 }
 \arguments{
 \item{m}{a matrix of single cell expression values.}
 
-\item{ncores}{number of CPU cores used. Caution: By default, CrossSCC will try use all CPU cores, which may cause "core dumped" error.}
+\item{ncores}{number of CPU cores used.}
 
 \item{var.cutoff}{cutoff value when filtering features.}
 
@@ -28,13 +28,17 @@ CrossSCC(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
 
 \item{mean.posterior.weight}{the weight for mean.posterior.cutoff when assessing the performance of the model.}
 
-\item{min.group.size}{minimal final group size (sample number). Only groups has more samples than this threshold will be further splitted.}
+\item{min.group.ratio}{minimal final group ratio (proportion of all sample number).
+At each decision node, only groups has more samples than this threshold will be further splitted.}
 
 \item{ovl.weight}{the weight for ovl.cutoff when assessing the performance of the model.}
 
 \item{lambda.cutoff}{Gaussian components with lambda over this cutoff value will be classified as a model representing a subtype of samples.}
 
-\item{ontos}{ontology terms used when converting features to meta-gene features. Default is "BP", could be arbitrary combination of c('BP', 'MF', 'CC').}
+\item{ontos}{ontology terms used when converting features to meta-gene features.
+Default is "BP", could be arbitrary combination of c('BP', 'MF', 'CC').}
+
+\item{min.group.size}{minimal final group size. Note: this parameter will overwrite parameter min.group.ratio.}
 
 \item{verbose}{verbose level. By default, CrossSCC will output all logs as well as progress bars.}
 
