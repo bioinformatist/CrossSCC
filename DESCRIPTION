@@ -39,4 +39,4 @@ Depends:
     snow
 biocViews: Software, GeneExpression, GUI, GeneSetEnrichment, Classification, Clustering,
   RNASeq, BatchEffect, Normalization, Preprocessing, Visualization
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2
