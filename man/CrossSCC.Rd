@@ -3,15 +3,25 @@
 \docType{package}
 \name{CrossSCC}
 \alias{CrossSCC}
-\alias{CrossSCC-package}
 \title{CrossSCC: An Single-Cell Clustering analysis framework Crossing batches of data}
 \usage{
-CrossSCC(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
-  mean.posterior.cutoff = 0.3, ovl.cutoff = 0.05,
-  mean.posterior.weight = 0.5, min.group.ratio = 0.1,
-  ovl.weight = 0.5, lambda.cutoff = 0.9, ontos = "BP",
-  min.group.size = NULL, verbose = R.utils::Verbose(threshold = -1),
-  show.progress.bar = TRUE)
+CrossSCC(
+  m,
+  ncores = 4,
+  var.cutoff = 0.9,
+  mapping = "org.Hs.eg.db",
+  mean.posterior.cutoff = 0.3,
+  ovl.cutoff = 0.05,
+  mean.posterior.weight = 0.5,
+  min.group.ratio = 0.1,
+  ovl.weight = 0.5,
+  lambda.cutoff = 0.9,
+  ontos = "BP",
+  min.group.size = NULL,
+  verbose = R.utils::Verbose(threshold = -1),
+  show.progress.bar = TRUE,
+  play.leaves = TRUE
+)
 }
 \arguments{
 \item{m}{a matrix of single cell expression values.}
@@ -43,6 +53,8 @@ Default is "BP", could be arbitrary combination of c('BP', 'MF', 'CC').}
 \item{verbose}{verbose level. By default, CrossSCC will output all logs as well as progress bars.}
 
 \item{show.progress.bar}{Set to FALSE if you don't want to see progress bar.}
+
+\item{play.leaves}{a test option. Default is TRUE.}
 }
 \value{
 a data.tree object.

@@ -30,6 +30,7 @@ NULL
 #' @param verbose verbose level. By default, CrossSCC will output all logs as well as progress bars.
 #' @param show.progress.bar Set to FALSE if you don't want to see progress bar.
 #' @param min.group.size minimal final group size. Note: this parameter will overwrite parameter min.group.ratio.
+#' @param play.leaves a test option. Default is TRUE.
 #'
 #' @return a data.tree object.
 #' @export
@@ -41,7 +42,7 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
                      mean.posterior.cutoff = 0.3,
                      ovl.cutoff = 0.05, mean.posterior.weight = 0.5, min.group.ratio = 0.1,
                      ovl.weight = 0.5, lambda.cutoff = 0.9, ontos = 'BP', min.group.size = NULL,
-                     verbose = R.utils::Verbose(threshold = -1), show.progress.bar = TRUE) {
+                     verbose = R.utils::Verbose(threshold = -1), show.progress.bar = TRUE, play.leaves = TRUE) {
   if (!verbose) {
     show.progress.bar <- FALSE
   }
@@ -62,15 +63,16 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
                          ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff,
                          result = NULL, verbose = verbose, show.progress.bar = show.progress.bar)
 
-  # Cut redundant nodes
-  Prune(result, function(x) length(x$siblings))
-  # Expand leaves as two components
-  result$Do(function(x) lapply(seq_along(x$sampleNames),
-                               function(i) x$AddChild(paste0(x$name, '\nsub-component ', i),
-                                                      sampleNames = x$sampleNames[[i]])),
-            filterFun = function(x) isLeaf(x) & is.list(x$sampleNames))
-
-
+  if (play.leaves) {
+    # Cut redundant nodes
+    Prune(result, function(x) length(x$siblings))
+    # Expand leaves as two components
+    result$Do(function(x) lapply(seq_along(x$sampleNames),
+                                 function(i) x$AddChild(paste0(x$name, '\nsub-component ', i),
+                                                        sampleNames = x$sampleNames[[i]])),
+              filterFun = function(x) isLeaf(x) & is.list(x$sampleNames))
+  }
+  
   verbose && newline(verbose)
   verbose && header(verbose, 'CrossSCC finished!
                     Try with another member in "Cross" family:
