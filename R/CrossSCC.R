@@ -181,7 +181,7 @@ rank_feature <- function(m, ncores, mean.posterior.cutoff, var.cutoff, ovl.cutof
                                                                               sampleNames = list(best.feature[['comp.1']],
                                                                                                  best.feature[['comp.2']]))
 
-      if (length(best.feature[['comp.1']]) > min.group.size) {
+      if (length(best.feature[['comp.1']]) > min.group.size & length(best.feature[['comp.2']]) > min.group.size) {
         pending.node <- pending.node + 1
         # Must use Traverse() here, for result is a reference
         rank_feature(m[, best.feature[['comp.1']]], ncores = ncores,
@@ -194,9 +194,7 @@ rank_feature <- function(m, ncores, mean.posterior.cutoff, var.cutoff, ovl.cutof
                      ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff, min.group.size = min.group.size,
                      verbose = verbose, show.progress.bar = show.progress.bar)
         pending.node <- pending.node - 1
-      }
 
-      if (length(best.feature[['comp.2']]) > min.group.size) {
         pending.node <- pending.node + 1
         rank_feature(m[, best.feature[['comp.2']]], ncores = ncores,
                      decision.node = best.name, nnode = 2,
