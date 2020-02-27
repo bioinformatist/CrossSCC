@@ -53,7 +53,7 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
   }
   
   # If logs is directed to a file, prgress bar should be closed
-  if (log.file) {
+  if (!is.null(log.file)) {
     verbose <- R.utils::Verbose(con = file(log.file), threshold = -1)
     show.progress.bar <- FALSE
   }
