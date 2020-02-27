@@ -20,7 +20,8 @@ CrossSCC(
   min.group.size = NULL,
   verbose = R.utils::Verbose(threshold = -1),
   show.progress.bar = TRUE,
-  play.leaves = TRUE
+  play.leaves = TRUE,
+  log.file = NULL
 )
 }
 \arguments{
@@ -43,7 +44,8 @@ At each decision node, only groups has more samples than this threshold will be 
 
 \item{ovl.weight}{the weight for ovl.cutoff when assessing the performance of the model.}
 
-\item{lambda.cutoff}{Gaussian components with lambda over this cutoff value will be classified as a model representing a subtype of samples.}
+\item{lambda.cutoff}{Gaussian components with lambda over this cutoff value
+will be classified as a model representing a subtype of samples.}
 
 \item{ontos}{ontology terms used when converting features to meta-gene features.
 Default is "BP", could be arbitrary combination of c('BP', 'MF', 'CC').}
@@ -54,7 +56,10 @@ Default is "BP", could be arbitrary combination of c('BP', 'MF', 'CC').}
 
 \item{show.progress.bar}{Set to FALSE if you don't want to see progress bar.}
 
-\item{play.leaves}{a test option. Default is TRUE.}
+\item{play.leaves}{a test/debug use option. Default is TRUE.}
+
+\item{log.file}{a test/debug use option. Messages will be directed to this new text file instead of stderr().
+Note that verbose threshold will be set to -1 with this parameter.}
 }
 \value{
 a data.tree object.

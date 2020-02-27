@@ -22,7 +22,8 @@ NULL
 #' @param ovl.cutoff cutoff value for OVL (overlapping coefficient) when rating Gaussion Mixture Model.
 #' @param mean.posterior.weight the weight for mean.posterior.cutoff when assessing the performance of the model.
 #' @param ovl.weight the weight for ovl.cutoff when assessing the performance of the model.
-#' @param lambda.cutoff Gaussian components with lambda over this cutoff value will be classified as a model representing a subtype of samples.
+#' @param lambda.cutoff Gaussian components with lambda over this cutoff value
+#' will be classified as a model representing a subtype of samples.
 #' @param ontos ontology terms used when converting features to meta-gene features.
 #' Default is "BP", could be arbitrary combination of c('BP', 'MF', 'CC').
 #' @param min.group.ratio minimal final group ratio (proportion of all sample number).
@@ -30,7 +31,9 @@ NULL
 #' @param verbose verbose level. By default, CrossSCC will output all logs as well as progress bars.
 #' @param show.progress.bar Set to FALSE if you don't want to see progress bar.
 #' @param min.group.size minimal final group size. Note: this parameter will overwrite parameter min.group.ratio.
-#' @param play.leaves a test option. Default is TRUE.
+#' @param play.leaves a test/debug use option. Default is TRUE.
+#' @param log.file a test/debug use option. Messages will be directed to this new text file instead of stderr().
+#' Note that verbose threshold will be set to -1 with this parameter.
 #'
 #' @return a data.tree object.
 #' @export
@@ -42,8 +45,16 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
                      mean.posterior.cutoff = 0.3,
                      ovl.cutoff = 0.05, mean.posterior.weight = 0.5, min.group.ratio = 0.1,
                      ovl.weight = 0.5, lambda.cutoff = 0.9, ontos = 'BP', min.group.size = NULL,
-                     verbose = R.utils::Verbose(threshold = -1), show.progress.bar = TRUE, play.leaves = TRUE) {
+                     verbose = R.utils::Verbose(threshold = -1), show.progress.bar = TRUE,
+                     play.leaves = TRUE, log.file = NULL) {
+  # Progress bar should be turned off if verbose is set to FALSE
   if (!verbose) {
+    show.progress.bar <- FALSE
+  }
+  
+  # If logs is directed to a file, prgress bar should be closed
+  if (log.file) {
+    verbose <- R.utils::Verbose(con = file(log.file), threshold = -1)
     show.progress.bar <- FALSE
   }
 
@@ -152,16 +163,14 @@ rank_feature <- function(m, ncores, mean.posterior.cutoff, var.cutoff, ovl.cutof
       # Initialize whole tree here
       result <- Node$new(best.name, sampleNames = list(best.feature[['comp.1']], best.feature[['comp.2']]))
 
-      if (length(best.feature[['comp.1']]) > min.group.size) {
+      if (length(best.feature[['comp.1']]) > min.group.size & length(best.feature[['comp.2']]) > min.group.size) {
         rank_feature(m[, best.feature[['comp.1']]], ncores = ncores,
                      decision.node = best.name, nnode = 1, result = result$root,
                      mean.posterior.cutoff = mean.posterior.cutoff, ovl.cutoff = ovl.cutoff,
                      mean.posterior.weight= mean.posterior.weight, min.group.ratio = min.group.ratio,
                      ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff, min.group.size = min.group.size,
                      verbose = verbose, show.progress.bar = show.progress.bar)
-      }
-
-      if (length(best.feature[['comp.2']]) > min.group.size) {
+        
         rank_feature(m[, best.feature[['comp.2']]], ncores = ncores,
                      decision.node = best.name, nnode = 2, result = result$root,
                      mean.posterior.cutoff = mean.posterior.cutoff, ovl.cutoff = ovl.cutoff,
