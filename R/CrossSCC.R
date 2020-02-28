@@ -186,10 +186,10 @@ rank_feature <- function(m, ncores, mean.posterior.cutoff, var.cutoff, ovl.cutof
                        emphasize(best.name), ' was chosen as representative feature', indent = 0)
       # Should use Traverse() here for FindNode() can only return the 1st node who matches
       # CAN NOT use Do() for all nodes kept after filtering will be performed same operation
-      Traverse(result$root,traversal = "post-order",
-               filterFun = function(x) x$name == decision.node)[[1]]$AddChild(best.name,
-                                                                              sampleNames = list(best.feature[['comp.1']],
-                                                                                                 best.feature[['comp.2']]))
+      rev(Traverse(result$root, traversal = "post-order",
+                   filterFun = function(x) x$name == decision.node & length(x$children) < 2))[[1]]$AddChild(best.name,
+                                                                                                            sampleNames = list(best.feature[['comp.1']],
+                                                                                                                               best.feature[['comp.2']]))
 
       if (length(best.feature[['comp.1']]) > min.group.size & length(best.feature[['comp.2']]) > min.group.size) {
         pending.node <- pending.node + 1
@@ -197,8 +197,9 @@ rank_feature <- function(m, ncores, mean.posterior.cutoff, var.cutoff, ovl.cutof
         rank_feature(m[, best.feature[['comp.1']]], ncores = ncores,
                      decision.node = best.name, nnode = 1,
                      # Traverse() will return all matched nodes, we use the 1st one in according to "post-order"
-                     result = Traverse(result$root,traversal = "post-order",
-                                       filterFun = function(x) x$name == best.name)[[1]],
+                     # post-order means from bottom to up, but we still need "right-to-left" by rev()
+                     result = rev(Traverse(result$root, traversal = "post-order",
+                                           filterFun = function(x) x$name == best.name & length(x$children) < 2))[[1]],
                      mean.posterior.cutoff = mean.posterior.cutoff, ovl.cutoff = ovl.cutoff,
                      mean.posterior.weight= mean.posterior.weight, min.group.ratio = min.group.ratio,
                      ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff, min.group.size = min.group.size,
@@ -208,8 +209,8 @@ rank_feature <- function(m, ncores, mean.posterior.cutoff, var.cutoff, ovl.cutof
         pending.node <- pending.node + 1
         rank_feature(m[, best.feature[['comp.2']]], ncores = ncores,
                      decision.node = best.name, nnode = 2,
-                     result = Traverse(result$root,traversal = "post-order",
-                                       filterFun = function(x) x$name == best.name)[[1]],
+                     result = rev(Traverse(result$root, traversal = "post-order",
+                                           filterFun = function(x) x$name == best.name & length(x$children) < 2))[[1]],
                      mean.posterior.cutoff = mean.posterior.cutoff, ovl.cutoff = ovl.cutoff,
                      mean.posterior.weight= mean.posterior.weight, min.group.ratio = min.group.ratio,
                      ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff, verbose = verbose,
