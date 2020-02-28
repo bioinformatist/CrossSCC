@@ -45,8 +45,9 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
                      mean.posterior.cutoff = 0.3,
                      ovl.cutoff = 0.05, mean.posterior.weight = 0.5, min.group.ratio = 0.1,
                      ovl.weight = 0.5, lambda.cutoff = 0.9, ontos = 'BP', min.group.size = NULL,
-                     verbose = R.utils::Verbose(threshold = -1), show.progress.bar = TRUE,
+                     verbose = R.utils::Verbose(threshold = -1, timestamp = TRUE), show.progress.bar = TRUE,
                      play.leaves = TRUE, log.file = NULL) {
+  options(expressions = 500000)
   # Progress bar should be turned off if verbose is set to FALSE
   if (!verbose) {
     show.progress.bar <- FALSE
@@ -54,7 +55,7 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
   
   # If logs is directed to a file, prgress bar should be closed
   if (!is.null(log.file)) {
-    verbose <- R.utils::Verbose(con = file(log.file), threshold = -1)
+    verbose <- R.utils::Verbose(con = file(log.file, open = 'a+'), threshold = -1, timestamp = TRUE, removeFile = FALSE)
     show.progress.bar <- FALSE
   }
 
