@@ -36,5 +36,5 @@ plot_CrossSCC <- function(x) {
   titles <- vapply(contents, element2label, character(1))
   tmp.plot <- plot(x, output = 'visNetwork')
   tmp.plot$x$nodes$title <- factor(titles)
-  tmp.plot %>% visNodes(image = 'https://reactome.org/icon/R-ICO-013594.png', shape = 'circularImage') %>% visHierarchicalLayout(sortMethod = 'directed')
+  tmp.plot %>% visNodes(image = 'https://reactome.org/icon/R-ICO-013594.png', shape = 'circularImage') %>% visHierarchicalLayout(sortMethod = 'directed') %>% visOptions(highlightNearest = TRUE, nodesIdSelection = TRUE)
 }
