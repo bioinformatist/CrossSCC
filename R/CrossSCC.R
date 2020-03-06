@@ -31,7 +31,6 @@ NULL
 #' @param verbose verbose level. By default, CrossSCC will output all logs as well as progress bars.
 #' @param show.progress.bar Set to FALSE if you don't want to see progress bar.
 #' @param min.group.size minimal final group size. Note: this parameter will overwrite parameter min.group.ratio.
-#' @param play.leaves a test/debug use option. Default is TRUE.
 #' @param log.file a test/debug use option. Messages will be directed to this new text file instead of stderr().
 #' Note that verbose threshold will be set to -1 with this parameter.
 #'
@@ -46,8 +45,11 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
                      ovl.cutoff = 0.05, mean.posterior.weight = 0.5, min.group.ratio = 0.1,
                      ovl.weight = 0.5, lambda.cutoff = 0.9, ontos = 'BP', min.group.size = NULL,
                      verbose = R.utils::Verbose(threshold = -1, timestamp = TRUE), show.progress.bar = TRUE,
-                     play.leaves = TRUE, log.file = NULL) {
-  options(expressions = 500000)
+                     log.file = NULL) {
+  message('Note: if you met error message as: 
+          "Error in serialize(data, node$con) : error writing to connection"
+          Please restart R session and try again.
+          It may caused by interrupt during previous running since CrossSCC processes data concurrently by default.')
   # Progress bar should be turned off if verbose is set to FALSE
   if (!verbose) {
     show.progress.bar <- FALSE
@@ -75,16 +77,6 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
                          ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff,
                          result = NULL, verbose = verbose, show.progress.bar = show.progress.bar)
 
-  if (play.leaves) {
-    # Cut redundant nodes
-    Prune(result, function(x) length(x$siblings))
-    # Expand leaves as two components
-    result$Do(function(x) lapply(seq_along(x$sampleNames),
-                                 function(i) x$AddChild(paste0(x$name, '\nsub-component ', i),
-                                                        sampleNames = x$sampleNames[[i]])),
-              filterFun = function(x) isLeaf(x) & is.list(x$sampleNames))
-  }
-  
   verbose && newline(verbose)
   verbose && header(verbose, 'CrossSCC finished!
                     Try with another member in "Cross" family:
@@ -186,10 +178,13 @@ rank_feature <- function(m, ncores, mean.posterior.cutoff, var.cutoff, ovl.cutof
                        emphasize(best.name), ' was chosen as representative feature', indent = 0)
       # Should use Traverse() here for FindNode() can only return the 1st node who matches
       # CAN NOT use Do() for all nodes kept after filtering will be performed same operation
-      rev(Traverse(result$root, traversal = "post-order",
-                   filterFun = function(x) x$name == decision.node & length(x$children) < 2))[[1]]$AddChild(best.name,
-                                                                                                            sampleNames = list(best.feature[['comp.1']],
-                                                                                                                               best.feature[['comp.2']]))
+      pointer <- Traverse(result$root, traversal = "post-order",
+                          filterFun = function(x) x$name == decision.node & length(x$children) < 2)[[1]]
+      
+      pointer$AddChild(best.name,
+                       sampleNames = list(best.feature[['comp.1']],
+                                          best.feature[['comp.2']]))
+      
 
       if (length(best.feature[['comp.1']]) > min.group.size & length(best.feature[['comp.2']]) > min.group.size) {
         pending.node <- pending.node + 1
@@ -198,8 +193,7 @@ rank_feature <- function(m, ncores, mean.posterior.cutoff, var.cutoff, ovl.cutof
                      decision.node = best.name, nnode = 1,
                      # Traverse() will return all matched nodes, we use the 1st one in according to "post-order"
                      # post-order means from bottom to up, but we still need "right-to-left" by rev()
-                     result = rev(Traverse(result$root, traversal = "post-order",
-                                           filterFun = function(x) x$name == best.name & length(x$children) < 2))[[1]],
+                     result = result,
                      mean.posterior.cutoff = mean.posterior.cutoff, ovl.cutoff = ovl.cutoff,
                      mean.posterior.weight= mean.posterior.weight, min.group.ratio = min.group.ratio,
                      ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff, min.group.size = min.group.size,
@@ -209,14 +203,18 @@ rank_feature <- function(m, ncores, mean.posterior.cutoff, var.cutoff, ovl.cutof
         pending.node <- pending.node + 1
         rank_feature(m[, best.feature[['comp.2']]], ncores = ncores,
                      decision.node = best.name, nnode = 2,
-                     result = rev(Traverse(result$root, traversal = "post-order",
-                                           filterFun = function(x) x$name == best.name & length(x$children) < 2))[[1]],
+                     result = result,
                      mean.posterior.cutoff = mean.posterior.cutoff, ovl.cutoff = ovl.cutoff,
                      mean.posterior.weight= mean.posterior.weight, min.group.ratio = min.group.ratio,
                      ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff, verbose = verbose,
                      min.group.size = min.group.size,
                      show.progress.bar = show.progress.bar)
         pending.node <- pending.node - 1
+      } else {
+        terminal.pointer <- Traverse(pointer, filterFun = function(x) x$name == best.name)[[1]]
+        lapply(seq_along(terminal.pointer$sampleNames),
+               function(i) terminal.pointer$AddChild(paste0(terminal.pointer$name, '\nsub-component ', i),
+                                                     sampleNames = terminal.pointer$sampleNames[[i]]))
       }
 
       if (pending.node == 0) {
@@ -237,7 +235,8 @@ rank_feature <- function(m, ncores, mean.posterior.cutoff, var.cutoff, ovl.cutof
     verbose && enter(verbose, '\tDetermined as ', emphasize('terminal node'), '. ',
             emphasize(representative.name), ' was chosen as representative feature', indent = 0)
     representative.feature <- only.feature[[representative.name]]
-    result$AddChild(representative.name, sampleNames = colnames(m))
+    Traverse(result$root, traversal = "post-order",
+             filterFun = function(x) x$name == decision.node & length(x$children) < 2)[[1]]$AddChild(representative.name, sampleNames = colnames(m))
     result
   }
 }
