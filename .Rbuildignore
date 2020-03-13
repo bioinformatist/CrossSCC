@@ -1,6 +1,6 @@
-^README\.Rmd$
+^*\.Rmd$
 ^LICENSE\.md$
-^GMMClassifier\.Rproj$
+^CrossSCC\.Rproj$
 ^\.Rproj\.user$
 ^packrat/
 ^\.Rprofile$
