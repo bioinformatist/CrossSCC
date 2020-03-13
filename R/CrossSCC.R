@@ -61,7 +61,7 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
     show.progress.bar <- FALSE
   }
 
-  m <- as_go(m, ncores = ncores, var.cutoff = var.cutoff, ontos = ontos,
+  m <- as_go(m, var.cutoff = var.cutoff, ontos = ontos,
              mapping = mapping, verbose = verbose, show.progress.bar = show.progress.bar)
 
   verbose && newline(verbose)

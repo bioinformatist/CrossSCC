@@ -2,7 +2,7 @@
 # @todo Perform PCA on real data first: only genes in PCs with significant variance (PC1 + PC2 + ... + PCn >= 90%) will be kept.
 # @todo Support user-defined GO terms and geneset relationship.
 # @todo Geneset score: Mean, median, weighted PCA score and GSVA enrichment score.
-as_go <- function(m, ncores = 4, var.cutoff = 0.9, ontos = 'BP', mapping = "org.Hs.eg.db", verbose = FALSE, show.progress.bar = TRUE) {
+as_go <- function(m, var.cutoff = 0.85, ontos = 'BP', mapping = "org.Hs.eg.db", verbose = FALSE, show.progress.bar = TRUE) {
   if (is(m, "ExpressionSet")) {
     m <- m
   } else if (is(m, "matrix")) {
@@ -11,7 +11,7 @@ as_go <- function(m, ncores = 4, var.cutoff = 0.9, ontos = 'BP', mapping = "org.
   } else {
     stop('Input data of CrossSCC must be ExpressionSet or matrix!')
   }
-
+  
   m <- Biobase::exprs(genefilter::varFilter(m, var.cutoff = var.cutoff))
 
   # Perform filtering based on PCA result
