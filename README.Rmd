@@ -126,8 +126,9 @@ immu[, var := rowVars(.SD), .SDcols = -c('Entrez')]
 immu <- immu[, max.var := max(var), by = 'Entrez'][var != 0 & max.var == var & !is.na(Entrez), ]
 immu[, grep("var", colnames(immu)) := NULL]
 immu <- as.data.frame(immu) %>% remove_rownames %>% column_to_rownames(var = "Entrez")
-immu <- immu[, !(names(immu) %in% 'Entrez')]
-immu <- new("ExpressionSet", exprs=as.matrix(immu), annotation = 'org.Hs.eg.db')
+immu <- as.matrix(immu[, !(names(immu) %in% 'Entrez')])
+symbols <- suppressMessages(AnnotationDbi::mapIds(org.Hs.eg.db, keys = rownames(immu), keytype = "ENTREZID", column="SYMBOL", multiVals = 'first'))
+rownames(immu) <- unname(symbols)
 use_data(immu, compress = 'xz')
 ```
 
