@@ -16,34 +16,21 @@ NULL
 #'
 #' @param m a matrix of single cell expression values.
 #' @param ncores number of CPU cores used.
-#' @param var.cutoff cutoff value when filtering features.
-#' @param mapping database package name according to organism. e.g. "org.Hs.eg.db".
-#' @param mean.posterior.cutoff cutoff value for mean posterior of each component when rating Gaussion Mixture Model.
-#' @param ovl.cutoff cutoff value for OVL (overlapping coefficient) when rating Gaussion Mixture Model.
-#' @param mean.posterior.weight the weight for mean.posterior.cutoff when assessing the performance of the model.
-#' @param ovl.weight the weight for ovl.cutoff when assessing the performance of the model.
-#' @param lambda.cutoff Gaussian components with lambda over this cutoff value
-#' will be classified as a model representing a subtype of samples.
-#' @param ontos ontology terms used when converting features to meta-gene features.
-#' Default is "BP", could be arbitrary combination of c('BP', 'MF', 'CC').
-#' @param min.group.ratio minimal final group ratio (proportion of all sample number).
-#' At each decision node, only groups has more samples than this threshold will be further splitted.
 #' @param verbose verbose level. By default, CrossSCC will output all logs as well as progress bars.
 #' @param show.progress.bar Set to FALSE if you don't want to see progress bar.
-#' @param min.group.size minimal final group size. Note: this parameter will overwrite parameter min.group.ratio.
 #' @param log.file a test/debug use option. Messages will be directed to this new text file instead of stderr().
 #' Note that verbose threshold will be set to -1 with this parameter.
+#' @param markers a dataframe contains marker information. Try examples for details.
 #'
 #' @return a data.tree object.
 #' @export
 #'
 #' @examples
-#' data('cl.b1')
-#' handsome.zuo <- CrossSCC(cl.b1[1:500,], ncores = 10, mean.posterior.cutoff = 0.18)
-CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
-                     mean.posterior.cutoff = 0.3,
-                     ovl.cutoff = 0.05, mean.posterior.weight = 0.5, min.group.ratio = 0.1,
-                     ovl.weight = 0.5, lambda.cutoff = 0.9, ontos = 'BP', min.group.size = NULL,
+#' library(data.table)
+#' markers <- fread(system.file("extdata", "markers.csv", package = "CrossSCC"))
+#' data(immu)
+#' handsome.zuo <- CrossSCC(immu, markers, ncores = 16)
+CrossSCC <- function(m, markers, ncores = 16, 
                      verbose = R.utils::Verbose(threshold = -1, timestamp = TRUE), show.progress.bar = TRUE,
                      log.file = NULL) {
   message('Note: if you met error message as: 
@@ -61,9 +48,6 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
     show.progress.bar <- FALSE
   }
 
-  m <- as_go(m, var.cutoff = var.cutoff, ontos = ontos,
-             mapping = mapping, verbose = verbose, show.progress.bar = show.progress.bar)
-
   verbose && newline(verbose)
   verbose && ruler(verbose, char = emojifont::emoji("dash"), length = 40)
   verbose && newline(verbose)
@@ -71,12 +55,40 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
   verbose && header(verbose, 'Starting tree splitting',
                     char = emojifont::emoji("sunflower"))
 
-  result <- rank_feature(m, ncores = ncores, mean.posterior.cutoff = mean.posterior.cutoff,
-                         ovl.cutoff = ovl.cutoff, mean.posterior.weight= mean.posterior.weight,
-                         min.group.ratio = min.group.ratio, min.group.size = min.group.size,
-                         ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff,
-                         result = NULL, verbose = verbose, show.progress.bar = show.progress.bar)
-
+  assigned <- rate_sample(m, ncores = ncores)
+  
+  is.root <- TRUE
+  
+  for (type in colnames(markers)) {
+    assigned.T <- assigned[markers$type]
+    assigned.T <- Filter(function(x) !is.null(x), assigned.T)
+    snowfall::sfRemoveAll(except = 'm')
+    snowfall::sfExport('assigned.T')
+    assigned.T <- pbapply::pblapply(colnames(m),
+                                    function(x) vapply(assigned.T,
+                                                       function(z) vapply(z,
+                                                                          function(y) x %in% y,
+                                                                          logical(1)),
+                                                       logical(2)), cl = cl)
+    names(assigned.T) <- colnames(m)
+    ownership <- vapply(assigned.T, function(x) names(which.max(apply(x, 1, sum))), character(1))
+    if (is.root) {
+      result <- Node$new('All', sampleNames = colnames(m))
+      is.root <- FALSE
+      result$AddChild(type, sampleNames = colnames(m)[which(ownership == "comp.expressed")])
+      no.type <- paste0('non', type)
+      result$AddChild(no.type, sampleNames = colnames(m)[which(ownership == "comp.no")])
+      m <- m[, colnames(m)[which(ownership == "comp.no")]]
+    } else {
+      pointer <- Traverse(result, filterFun = function(x) x$name == no.type)[[1]]
+      pointer$AddChild(type, sampleNames = colnames(m)[which(ownership == "comp.expressed")])
+      no.type <- paste0('non', type)
+      result$AddChild(no.type, sampleNames = colnames(m)[which(ownership == "comp.no")])
+      m <- m[, colnames(m)[which(ownership == "comp.no")]]
+    }
+  }
+  
+  snowfall::sfStop()
   verbose && newline(verbose)
   verbose && header(verbose, 'CrossSCC finished!
                     Try with another member in "Cross" family:
@@ -90,47 +102,9 @@ CrossSCC <- function(m, ncores = 4, var.cutoff = 0.9, mapping = "org.Hs.eg.db",
 
 # https://stackoverflow.com/a/39926819
 # To avoid using <<-, I use function parameter instead of "global variables"
-rank_feature <- function(m, ncores, mean.posterior.cutoff, var.cutoff, ovl.cutoff,
-                         mean.posterior.weight, ovl.weight, lambda.cutoff, min.group.ratio,
-                         nnode = 1, decision.node = NULL, pending.node = 0, min.group.size,
+render_tree <- function(m, ncores, 
+                         nnode = 1, decision.node = NULL, pending.node = 0,
                          result, verbose = FALSE, show.progress.bar = TRUE) {
-
-  # Matrix with too few features need NOT paralleled computing
-  # Must use NROW() instead of nrow() for latter may produce NULL
-  # https://stackoverflow.com/questions/27674937/why-do-ncol-and-nrow-only-yield-null-when-i-do-have-data
-  if (NROW(m) < 400 | ncores == 1) {
-    rated.feature <- lapply(split(m, seq(NROW(m))), rate_feature, sample.names = colnames(m),
-                            mean.posterior.cutoff = mean.posterior.cutoff,
-                            ovl.cutoff = ovl.cutoff, mean.posterior.weight= mean.posterior.weight,
-                            ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff)
-  } else {
-    if (show.progress.bar) {
-      pbo <- pbapply::pboptions(type = "timer", use_lb = TRUE,
-                         char = emojifont::emoji('rocket'),
-                         txt.width = 30)
-    } else {
-      pbo <- pbapply::pboptions(type = "none", use_lb = TRUE)
-    }
-
-    on.exit(pbapply::pboptions(pbo))
-
-    expected.cores <- floor(NROW(m) / 400) + 1
-    if (expected.cores > ncores) {
-      expected.cores <- ncores
-    }
-    verbose && enter(verbose, 'Rating features on ', emphasize(expected.cores), ' cores', indent = 0)
-    capture.output(suppressMessages(snowfall::sfInit(parallel = TRUE, cpu = expected.cores)))
-    cl <- snowfall::sfGetCluster()
-
-    rate_feature <- rate_feature
-    snowfall::sfExport('m', 'rate_feature')
-    rated.feature <- pbapply::pblapply(split(m, seq(NROW(m))), rate_feature, sample.names = colnames(m),
-                                       mean.posterior.cutoff = mean.posterior.cutoff,
-                                       ovl.cutoff = ovl.cutoff, mean.posterior.weight= mean.posterior.weight,
-                                       ovl.weight = ovl.weight, lambda.cutoff = lambda.cutoff, cl = cl)
-    suppressMessages(snowfall::sfStop())
-  }
-
   # To return with sample names instead of indices
   names(rated.feature) <- rownames(m)
   rated.feature <- Filter(function(x) !is.null(x), rated.feature)

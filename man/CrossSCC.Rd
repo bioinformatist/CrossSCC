@@ -7,17 +7,8 @@
 \usage{
 CrossSCC(
   m,
-  ncores = 4,
-  var.cutoff = 0.9,
-  mapping = "org.Hs.eg.db",
-  mean.posterior.cutoff = 0.3,
-  ovl.cutoff = 0.05,
-  mean.posterior.weight = 0.5,
-  min.group.ratio = 0.1,
-  ovl.weight = 0.5,
-  lambda.cutoff = 0.9,
-  ontos = "BP",
-  min.group.size = NULL,
+  markers,
+  ncores = 16,
   verbose = R.utils::Verbose(threshold = -1, timestamp = TRUE),
   show.progress.bar = TRUE,
   log.file = NULL
@@ -26,30 +17,9 @@ CrossSCC(
 \arguments{
 \item{m}{a matrix of single cell expression values.}
 
+\item{markers}{a dataframe contains marker information. Try examples for details.}
+
 \item{ncores}{number of CPU cores used.}
-
-\item{var.cutoff}{cutoff value when filtering features.}
-
-\item{mapping}{database package name according to organism. e.g. "org.Hs.eg.db".}
-
-\item{mean.posterior.cutoff}{cutoff value for mean posterior of each component when rating Gaussion Mixture Model.}
-
-\item{ovl.cutoff}{cutoff value for OVL (overlapping coefficient) when rating Gaussion Mixture Model.}
-
-\item{mean.posterior.weight}{the weight for mean.posterior.cutoff when assessing the performance of the model.}
-
-\item{min.group.ratio}{minimal final group ratio (proportion of all sample number).
-At each decision node, only groups has more samples than this threshold will be further splitted.}
-
-\item{ovl.weight}{the weight for ovl.cutoff when assessing the performance of the model.}
-
-\item{lambda.cutoff}{Gaussian components with lambda over this cutoff value
-will be classified as a model representing a subtype of samples.}
-
-\item{ontos}{ontology terms used when converting features to meta-gene features.
-Default is "BP", could be arbitrary combination of c('BP', 'MF', 'CC').}
-
-\item{min.group.size}{minimal final group size. Note: this parameter will overwrite parameter min.group.ratio.}
 
 \item{verbose}{verbose level. By default, CrossSCC will output all logs as well as progress bars.}
 
@@ -67,6 +37,8 @@ CrossSCC: An Single-Cell Clustering analysis framework Crossing batches of data
 CrossSCC
 }
 \examples{
-data('cl.b1')
-handsome.zuo <- CrossSCC(cl.b1[1:500,], ncores = 10, mean.posterior.cutoff = 0.18)
+library(data.table)
+markers <- fread(system.file("extdata", "markers.csv", package = "CrossSCC"))
+data(immu)
+handsome.zuo <- CrossSCC(immu, markers, ncores = 16)
 }
